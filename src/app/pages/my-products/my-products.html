@@ -1,0 +1,22 @@
+<div class="bg-gray-50 min-h-[calc(100vh-4rem)] pb-12">
+  
+  <!-- Header Banner -->
+  <div class="bg-gradient-to-r from-green-400 to-blue-500 py-8">
+    <h1 class="text-3xl font-bold text-center text-white">Mis Productos</h1>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <app-product-card *ngFor="let product of products" [product]="product"></app-product-card>
+
+      <!-- Mock cards in case API is empty -->
+      <app-product-card *ngIf="products.length === 0" [product]="{id:1, title:'Libro Clean Code', description:'Se encuentra en buen estado', price:75, status:'used', categoryId:1, userId:1, available:true, createdAt:'', images:[]}"></app-product-card>
+      <app-product-card *ngIf="products.length === 0" [product]="{id:3, title:'Introducing Python', description:'Libro para aprender Python desde cero', price:89, status:'new', categoryId:1, userId:1, available:true, createdAt:'', images:[]}"></app-product-card>
+    </div>
+
+    <div class="text-center mt-16 text-gray-500 text-sm pb-8">
+      No hay más resultados
+    </div>
+  </div>
+</div>

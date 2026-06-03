@@ -1,0 +1,54 @@
+<div class="bg-gradient-to-br from-green-400 to-blue-500 min-h-[calc(100vh-4rem)] p-8 flex flex-col items-center">
+  <div class="w-full max-w-5xl bg-transparent">
+    
+    <div *ngIf="success" class="bg-white text-green-600 p-4 rounded-xl shadow-md text-center font-bold mb-6">
+      ¡Producto agregado exitosamente!
+    </div>
+
+    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="flex flex-col h-full">
+      <div class="flex flex-col md:flex-row gap-8">
+        
+        <!-- Left: Form Fields -->
+        <div class="flex-1 space-y-4">
+          <input type="text" formControlName="title" class="w-full bg-white rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm" placeholder="Nombre">
+          
+          <textarea formControlName="description" class="w-full bg-white rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm resize-none h-32" placeholder="Descripción"></textarea>
+          
+          <input type="text" formControlName="status" class="w-full bg-white rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm" placeholder="Estado (ej. new, used)">
+          
+          <input type="number" formControlName="price" class="w-full bg-white rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm" placeholder="Precio">
+          
+          <select formControlName="categoryId" class="w-full bg-white rounded-xl px-4 py-3 text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm appearance-none">
+            <option value="" disabled selected>Clasificación</option>
+            <option value="1">Libros</option>
+            <option value="2">Calculadoras</option>
+            <option value="3">Electrónica</option>
+          </select>
+          
+          <input type="text" formControlName="subcategoryId" class="w-full bg-white rounded-xl px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm" placeholder="Subclasificación">
+        </div>
+
+        <!-- Right: Image Upload -->
+        <div class="flex-1">
+          <div class="bg-white rounded-xl h-full min-h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
+            <div class="text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-300" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="mt-2 block text-sm font-medium text-gray-400">
+                Subir fotos
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="mt-8 text-center pb-12">
+        <button type="submit" [disabled]="!productForm.valid" class="bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 text-white font-bold py-3 px-12 rounded-full shadow-lg transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100">
+          Agregar Producto
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

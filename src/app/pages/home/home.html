@@ -1,0 +1,86 @@
+<div class="bg-gray-50 min-h-screen pb-12">
+  <!-- Hero Section -->
+  <div class="bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 relative flex flex-col md:flex-row items-center">
+      <div class="w-full md:w-3/5 z-10 text-white pr-8">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+          COMPRA Y VENDE<br/>MATERIALES<br/>ACADÉMICOS CON MÁS SEGURIDAD Y MENOR COSTO
+        </h1>
+        <p class="text-lg md:text-xl mb-8 max-w-xl">
+          Ahorra entre 50% y 70% dándole una segunda vida a tus libros y equipos. Una red exclusiva para tu comunidad universitaria.
+        </p>
+        <a routerLink="/add-product" class="inline-block bg-white text-green-600 px-8 py-3 rounded-full font-bold shadow-md hover:bg-gray-100 transition-colors">
+          Vender
+        </a>
+      </div>
+      <div class="w-full md:w-2/5 mt-10 md:mt-0 flex justify-center md:justify-end z-10">
+        <!-- Circular Image Placeholder -->
+        <div class="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 border-white shadow-xl">
+          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800" alt="Estudiantes" class="w-full h-full object-cover">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="font-bold text-gray-900 text-lg">Sanciones y Reporte</h3>
+        <p class="text-gray-600 mt-2 text-sm">Herramientas integradas para reportar usuarios o mensajes sospechosos, asegurando un espacio libre de estafas.</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="font-bold text-gray-900 text-lg">Chats seguros y supervisados</h3>
+        <p class="text-gray-600 mt-2 text-sm">Comunícate directamente con otros estudiantes dentro de la plataforma, sin compartir datos personales externos.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="relative h-40 rounded-xl overflow-hidden group cursor-pointer">
+        <img src="https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=400" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        <div class="absolute inset-0 bg-black/30"></div>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+          <span class="bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold px-6 py-2 rounded-full">LIBROS</span>
+        </div>
+      </div>
+      <div class="relative h-40 rounded-xl overflow-hidden group cursor-pointer md:col-span-2">
+        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        <div class="absolute inset-0 bg-black/30"></div>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+          <span class="bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold px-6 py-2 rounded-full">SOFTWARE</span>
+        </div>
+      </div>
+      <div class="relative h-40 rounded-xl overflow-hidden group cursor-pointer">
+        <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=400" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        <div class="absolute inset-0 bg-black/30"></div>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+          <span class="bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold px-6 py-2 rounded-full">ÚTILES</span>
+        </div>
+      </div>
+      <div class="relative h-40 rounded-xl overflow-hidden group cursor-pointer md:col-span-4">
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1200" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        <div class="absolute inset-0 bg-black/30"></div>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0">
+          <span class="bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold px-6 py-2 rounded-full">HARDWARE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popular Products -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+    <h2 class="text-3xl font-bold text-center text-gray-900 mb-8">Más populares</h2>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <app-product-card *ngFor="let product of products" [product]="product"></app-product-card>
+      
+      <!-- Mock cards in case the API is empty -->
+      <app-product-card *ngIf="products.length === 0" [product]="{id:1, title:'Libro Clean Code', description:'Se encuentra en buen estado', price:75, status:'used', categoryId:1, userId:1, available:true, createdAt:'', images:[]}"></app-product-card>
+      <app-product-card *ngIf="products.length === 0" [product]="{id:2, title:'Casio fx-82LA PLUS-2 PK', description:'Calculadora Importada color rosa', price:53.90, status:'new', categoryId:2, userId:1, available:true, createdAt:'', images:[]}"></app-product-card>
+      <app-product-card *ngIf="products.length === 0" [product]="{id:3, title:'Introducing Python', description:'Libro para aprender Python desde cero', price:89, status:'new', categoryId:1, userId:1, available:true, createdAt:'', images:[]}"></app-product-card>
+    </div>
+  </div>
+</div>
