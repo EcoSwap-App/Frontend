@@ -55,18 +55,48 @@
               </p>
             </div>
             
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 grid grid-cols-2 gap-4">
-              <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Carrera</p>
-                <p class="text-gray-800 font-medium">{{ user.career || 'No especificada' }}</p>
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-100 relative">
+              <button *ngIf="!isEditingInfo" (click)="startEditingInfo()" class="absolute top-4 right-4 text-gray-400 hover:text-blue-500 transition-colors" title="Editar información">
+                <span class="material-icons text-[20px]">edit</span>
+              </button>
+              
+              <!-- View Mode -->
+              <div *ngIf="!isEditingInfo" class="grid grid-cols-2 gap-y-6 gap-x-4">
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Carrera</p>
+                  <p class="text-gray-800 font-semibold">{{ user.career || 'No especificada' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ciclo Actual</p>
+                  <p class="text-gray-800 font-semibold">{{ user.cycle ? 'Ciclo ' + user.cycle : 'No especificado' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Miembro desde</p>
+                  <p class="text-gray-800 font-semibold">{{ user.createdAt | date:'longDate' }}</p>
+                </div>
               </div>
-              <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Ciclo Actual</p>
-                <p class="text-gray-800 font-medium">{{ user.cycle ? 'Ciclo ' + user.cycle : 'No especificado' }}</p>
-              </div>
-              <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Miembro desde</p>
-                <p class="text-gray-800 font-medium">{{ user.createdAt | date:'longDate' }}</p>
+
+              <!-- Edit Mode -->
+              <div *ngIf="isEditingInfo" class="grid grid-cols-2 gap-y-4 gap-x-4">
+                <div class="col-span-2 sm:col-span-1">
+                  <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Carrera</label>
+                  <input type="text" [(ngModel)]="editData.career" class="w-full bg-white rounded-lg px-3 py-2 text-sm text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Ej. Arquitectura">
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                  <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Ciclo Actual</label>
+                  <select [(ngModel)]="editData.cycle" class="w-full bg-white rounded-lg px-3 py-2 text-sm text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <option *ngFor="let c of availableCycles" [ngValue]="c">Ciclo {{ c }}</option>
+                  </select>
+                </div>
+                <div class="col-span-2 flex justify-end gap-3 mt-2">
+                  <button (click)="cancelEditingInfo()" class="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-200">
+                    Cancelar
+                  </button>
+                  <button (click)="saveInfo()" [disabled]="isSavingInfo || !editData.career.trim()" class="text-sm font-bold bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2">
+                    <span *ngIf="isSavingInfo" class="material-icons animate-spin text-[16px]">sync</span>
+                    Guardar
+                  </button>
+                </div>
               </div>
             </div>
           </div>

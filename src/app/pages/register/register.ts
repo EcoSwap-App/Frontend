@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,7 +21,8 @@ export class Register {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {
     this.registerForm = this.fb.group({
       name: ['', Validators.required],
@@ -39,16 +40,32 @@ export class Register {
 
   async onFileSelected(event: any) {
     if (event.target.files && event.target.files[0]) {
+      console.log('File selected:', event.target.files[0].name);
       this.isCompressing = true;
+      this.cdr?.detectChanges();
+      
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
       try {
         const file = event.target.files[0];
+        console.log('Starting compression...');
         this.avatarBase64 = await this.compressImage(file);
+        console.log('Compression successful, length:', this.avatarBase64.length);
       } catch (err) {
         console.error('Error compressing image:', err);
       } finally {
         this.isCompressing = false;
+        event.target.value = ''; // Reset file input here as well
+        this.cdr?.detectChanges();
+        console.log('Spinner should be hidden now');
       }
     }
+  }
+
+  removePhoto(event: Event, fileInput: HTMLInputElement) {
+    event.stopPropagation();
+    this.avatarBase64 = '';
+    fileInput.value = '';
   }
 
   compressImage(file: File): Promise<string> {
@@ -63,8 +80,8 @@ export class Register {
         img.onload = () => {
           try {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200;
-            const MAX_HEIGHT = 1200;
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
             let width = img.width;
             let height = img.height;
 
@@ -85,7 +102,8 @@ export class Register {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
             
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            // Use WebP for better compression, quality 0.7
+            const dataUrl = canvas.toDataURL('image/webp', 0.7);
             resolve(dataUrl);
           } catch (e) {
             reject(e);

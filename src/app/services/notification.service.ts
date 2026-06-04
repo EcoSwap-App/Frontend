@@ -14,11 +14,11 @@ export class NotificationService implements OnDestroy {
   public unreadCount$ = this.unreadCountSubject.asObservable();
 
   private pollSubscription?: Subscription;
-  private userId: number | null = null;
+  private userId: number | string | null = null;
 
   constructor(private apiService: ApiService) {}
 
-  initForUser(userId: number) {
+  initForUser(userId: number | string) {
     this.userId = userId;
     this.refreshNotifications();
     this.startPolling();
@@ -71,22 +71,22 @@ export class NotificationService implements OnDestroy {
     this.unreadCountSubject.next(notifications.filter(n => !n.read).length);
   }
 
-  markAsRead(id: number) {
+  markAsRead(id: number | string) {
     return this.apiService.markNotificationRead(id, true).pipe(
       map(() => {
         // Update local state optimisticly
         const notifications = this.notificationsSubject.value.map(n => 
-          n.id === id ? { ...n, read: true } : n
+          String(n.id) === String(id) ? { ...n, read: true } : n
         );
         this.updateState(notifications);
       })
     );
   }
 
-  deleteNotification(id: number) {
+  deleteNotification(id: number | string) {
     return this.apiService.deleteNotification(id).pipe(
       map(() => {
-        const notifications = this.notificationsSubject.value.filter(n => n.id !== id);
+        const notifications = this.notificationsSubject.value.filter(n => String(n.id) !== String(id));
         this.updateState(notifications);
       })
     );

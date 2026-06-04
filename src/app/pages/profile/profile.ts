@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
 import { AuthService } from '../../services/auth';
 import { User, Product } from '../../models';
@@ -7,7 +8,7 @@ import { User, Product } from '../../models';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './profile.html',
 })
 export class Profile implements OnInit {
@@ -17,6 +18,11 @@ export class Profile implements OnInit {
   activeCount: number = 0;
   isCompressing: boolean = false;
   viewingImage: string | null = null;
+
+  isEditingInfo: boolean = false;
+  isSavingInfo: boolean = false;
+  editData = { career: '', cycle: 1 };
+  availableCycles = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   constructor(
     private authService: AuthService,
@@ -31,6 +37,42 @@ export class Profile implements OnInit {
         this.loadMetrics();
       }
       this.cdr.detectChanges();
+    });
+  }
+
+  startEditingInfo() {
+    if (this.user) {
+      this.editData = {
+        career: this.user.career || '',
+        cycle: this.user.cycle || 1
+      };
+      this.isEditingInfo = true;
+    }
+  }
+
+  cancelEditingInfo() {
+    this.isEditingInfo = false;
+  }
+
+  saveInfo() {
+    if (!this.user || !this.editData.career.trim()) return;
+    
+    this.isSavingInfo = true;
+    this.apiService.updateUser(this.user.id, {
+      career: this.editData.career.trim(),
+      cycle: Number(this.editData.cycle)
+    }).subscribe({
+      next: (savedUser) => {
+        this.authService.updateCurrentUser(savedUser);
+        this.isSavingInfo = false;
+        this.isEditingInfo = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error updating profile info', err);
+        this.isSavingInfo = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -113,8 +155,8 @@ export class Profile implements OnInit {
         img.onload = () => {
           try {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200;
-            const MAX_HEIGHT = 1200;
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
             let width = img.width;
             let height = img.height;
 
@@ -135,7 +177,7 @@ export class Profile implements OnInit {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
             
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const dataUrl = canvas.toDataURL('image/webp', 0.7);
             resolve(dataUrl);
           } catch (e) {
             reject(e);

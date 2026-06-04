@@ -22,14 +22,22 @@
         
         <!-- Avatar Upload -->
         <div class="flex justify-center mb-6">
-          <div class="relative group cursor-pointer" (click)="fileInput.click()">
-            <div class="w-24 h-24 rounded-full border-4 border-white bg-green-50 shadow-md flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
+          <div class="relative group">
+            <div class="w-24 h-24 rounded-full border-4 border-white bg-green-50 shadow-md flex items-center justify-center overflow-hidden transition-transform hover:scale-105 cursor-pointer" (click)="fileInput.click()">
               <img *ngIf="avatarBase64 && !isCompressing" [src]="avatarBase64" class="w-full h-full object-cover">
               <span *ngIf="!avatarBase64 && !isCompressing" class="material-icons text-3xl text-green-300">add_a_photo</span>
               <div *ngIf="isCompressing" class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
                 <span class="material-icons animate-spin">sync</span>
               </div>
             </div>
+            
+            <!-- Remove photo button -->
+            <button type="button" *ngIf="avatarBase64 && !isCompressing" 
+                    (click)="removePhoto($event, fileInput)" 
+                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-sm z-10 transition-colors cursor-pointer border-2 border-white">
+              <span class="material-icons text-[14px] font-bold">close</span>
+            </button>
+            
             <div class="text-center mt-2 text-xs font-medium text-gray-500">Foto (opcional)</div>
             <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" [disabled]="isCompressing">
           </div>

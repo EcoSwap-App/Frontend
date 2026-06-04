@@ -49,7 +49,7 @@ export class ProductDetails implements OnInit {
 
       // Check if user is owner
       const user = this.authService.currentUser;
-      if (user && Number(data.userId) === Number(user.id)) {
+      if (user && String(data.userId) === String(user.id)) {
         this.isOwner = true;
       }
       
@@ -84,14 +84,14 @@ export class ProductDetails implements OnInit {
 
   contactSeller() {
     if (!this.currentUser || !this.product) return;
-    if (this.currentUser.id === this.product.userId) {
+    if (String(this.currentUser.id) === String(this.product.userId)) {
       alert("No puedes contactarte a ti mismo.");
       return;
     }
 
     // Check if a chat already exists
     this.apiService.getChats(this.currentUser.id).subscribe(chats => {
-      const existingChat = chats.find(c => c.productId === this.product!.id && c.participants.includes(this.product!.userId));
+      const existingChat = chats.find(c => String(c.productId) === String(this.product!.id) && c.participants.map(String).includes(String(this.product!.userId)));
       
       if (existingChat) {
         this.router.navigate(['/chat'], { queryParams: { chatId: existingChat.id } });
@@ -99,7 +99,7 @@ export class ProductDetails implements OnInit {
         // Create new chat
         const newChat: Partial<Chat> = {
           productId: this.product!.id,
-          participants: [this.currentUser!.id, this.product!.userId],
+          participants: [String(this.currentUser!.id), String(this.product!.userId)],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

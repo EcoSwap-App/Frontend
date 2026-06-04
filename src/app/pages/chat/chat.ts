@@ -24,7 +24,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   // Maps to store extra info for UI
-  chatDetails = new Map<number, { otherUser: User, product: Product }>();
+  chatDetails = new Map<string, { otherUser: User, product: Product }>();
 
   constructor(
     private chatService: ChatService,
@@ -48,8 +48,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       // Auto-select chat if passed in route query params
       const chatIdParam = this.route.snapshot.queryParamMap.get('chatId');
       if (chatIdParam) {
-        const id = Number(chatIdParam);
-        const chat = chats.find(c => Number(c.id) === id); // Fix potential string vs number comparison here
+        const chat = chats.find(c => String(c.id) === String(chatIdParam));
         if (chat) this.selectChat(chat);
       } else if (chats.length > 0 && !this.activeChat) {
         this.selectChat(chats[0]);
@@ -76,17 +75,17 @@ export class ChatComponent implements OnInit, OnDestroy {
   loadChatDetails(chats: Chat[]) {
     if (!this.currentUser) return;
     
-    const currentUserId = Number(this.currentUser.id);
+    const currentUserId = String(this.currentUser.id);
     
     chats.forEach(chat => {
-      if (!this.chatDetails.has(Number(chat.id))) {
-        const otherUserId = chat.participants.find(id => Number(id) !== currentUserId);
+      if (!this.chatDetails.has(String(chat.id))) {
+        const otherUserId = chat.participants.find(id => String(id) !== currentUserId);
         if (otherUserId) {
           forkJoin({
             user: this.apiService.getUserById(otherUserId),
             product: this.apiService.getProductById(chat.productId)
           }).subscribe(({ user, product }) => {
-            this.chatDetails.set(Number(chat.id), {
+            this.chatDetails.set(String(chat.id), {
               otherUser: user,
               product: product
             });
@@ -99,7 +98,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   selectChat(chat: Chat) {
     this.activeChat = chat;
-    this.chatService.setActiveChat(Number(chat.id));
+    this.chatService.setActiveChat(chat.id);
   }
 
   sendMessage() {
@@ -109,20 +108,20 @@ export class ChatComponent implements OnInit, OnDestroy {
     const text = this.newMessageText.trim();
     this.newMessageText = ''; // Clear immediately for better UX
     
-    this.chatService.sendMessage(Number(this.activeChat.id), Number(this.currentUser.id), text)
+    this.chatService.sendMessage(this.activeChat.id, this.currentUser.id, text)
       .subscribe(() => {
         // Also create a notification for the other user (only if one doesn't exist unread for this chat)
-        const currentUserId = Number(this.currentUser!.id);
-        const otherUserId = this.activeChat!.participants.find(id => Number(id) !== currentUserId);
+        const currentUserId = String(this.currentUser!.id);
+        const otherUserId = this.activeChat!.participants.find(id => String(id) !== currentUserId);
         if (otherUserId) {
-          this.apiService.getNotifications(Number(otherUserId)).subscribe(notifs => {
-            const hasUnread = notifs.some(n => n.type === 'message' && n.chatId === Number(this.activeChat!.id) && !n.read);
+          this.apiService.getNotifications(otherUserId).subscribe(notifs => {
+            const hasUnread = notifs.some(n => n.type === 'message' && String(n.chatId) === String(this.activeChat!.id) && !n.read);
             if (!hasUnread) {
-              const productTitle = this.chatDetails.get(Number(this.activeChat!.id))?.product.title || 'un producto';
+              const productTitle = this.chatDetails.get(String(this.activeChat!.id))?.product.title || 'un producto';
               this.apiService.createNotification({
-                userId: Number(otherUserId),
+                userId: otherUserId,
                 type: 'message',
-                chatId: Number(this.activeChat!.id),
+                chatId: this.activeChat!.id,
                 text: `${this.currentUser!.name} te ha enviado un mensaje sobre ${productTitle}`,
                 read: false,
                 createdAt: new Date().toISOString()
@@ -134,35 +133,35 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   getOtherUser(chat: Chat): User | null {
-    return this.chatDetails.get(Number(chat.id))?.otherUser || null;
+    return this.chatDetails.get(String(chat.id))?.otherUser || null;
   }
 
   getProductTitle(chat: Chat): string {
-    return this.chatDetails.get(Number(chat.id))?.product.title || 'Loading...';
+    return this.chatDetails.get(String(chat.id))?.product.title || 'Loading...';
   }
   
   isProductOwner(chat: Chat): boolean {
     if (!this.currentUser) return false;
-    const product = this.chatDetails.get(Number(chat.id))?.product;
-    return product?.userId === Number(this.currentUser.id);
+    const product = this.chatDetails.get(String(chat.id))?.product;
+    return String(product?.userId) === String(this.currentUser.id);
   }
 
   isProductSold(chat: Chat): boolean {
-    const product = this.chatDetails.get(Number(chat.id))?.product;
+    const product = this.chatDetails.get(String(chat.id))?.product;
     return product?.status === 'sold';
   }
 
   markAsSold() {
     if (!this.activeChat) return;
-    const product = this.chatDetails.get(Number(this.activeChat.id))?.product;
+    const product = this.chatDetails.get(String(this.activeChat.id))?.product;
     if (!product) return;
     
     if (confirm(`¿Seguro que quieres marcar "${product.title}" como vendido? Esto cerrará el chat.`)) {
       this.apiService.updateProduct(product.id, { status: 'sold', available: false }).subscribe(updatedProduct => {
-        const details = this.chatDetails.get(Number(this.activeChat!.id));
+        const details = this.chatDetails.get(String(this.activeChat!.id));
         if (details) {
           details.product = updatedProduct;
-          this.chatDetails.set(Number(this.activeChat!.id), details);
+          this.chatDetails.set(String(this.activeChat!.id), details);
           this.cdr.detectChanges();
         }
       });
@@ -181,7 +180,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   isMyMessage(msg: Message): boolean {
-    return Number(msg.senderId) === Number(this.currentUser?.id);
+    return String(msg.senderId) === String(this.currentUser?.id);
   }
 
   ngOnDestroy() {

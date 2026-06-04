@@ -15,17 +15,17 @@ export class ApiService {
     return this.http.get<Product[]>(`${this.apiUrl}/products`);
   }
 
-  getProductsByUserId(userId: number): Observable<Product[]> {
+  getProductsByUserId(userId: number | string): Observable<Product[]> {
     return this.http.get<Product[]>(`${this.apiUrl}/products?userId=${userId}`);
   }
 
-  getProductsExceptUserId(userId: number): Observable<Product[]> {
-    // Note: json-server v1 beta might not fully support _ne, but this matches json-server conventions.
-    // If it fails, the frontend will fallback to client-side filtering.
-    return this.http.get<Product[]>(`${this.apiUrl}/products?userId_ne=${userId}`);
+  getProductsExceptUserId(userId: number | string): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.apiUrl}/products`).pipe(
+      map(products => products.filter(p => String(p.userId) !== String(userId)))
+    );
   }
 
-  getProductById(id: number): Observable<Product> {
+  getProductById(id: number | string): Observable<Product> {
     return this.http.get<Product>(`${this.apiUrl}/products/${id}`);
   }
 
@@ -33,7 +33,7 @@ export class ApiService {
     return this.http.post<Product>(`${this.apiUrl}/products`, product);
   }
 
-  updateProduct(id: number, product: Partial<Product>): Observable<Product> {
+  updateProduct(id: number | string, product: Partial<Product>): Observable<Product> {
     return this.http.patch<Product>(`${this.apiUrl}/products/${id}`, product);
   }
 
@@ -45,18 +45,18 @@ export class ApiService {
     return this.http.get<User[]>(`${this.apiUrl}/users`);
   }
 
-  getUserById(id: number): Observable<User> {
+  getUserById(id: number | string): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/${id}`);
   }
 
-  updateUser(id: number, user: Partial<User>): Observable<User> {
+  updateUser(id: number | string, user: Partial<User>): Observable<User> {
     return this.http.patch<User>(`${this.apiUrl}/users/${id}`, user);
   }
 
   getChats(userId: number | string): Observable<Chat[]> {
-    const numId = Number(userId);
+    const strId = String(userId);
     return this.http.get<Chat[]>(`${this.apiUrl}/chats`).pipe(
-      map(chats => chats.filter(c => c.participants.map(Number).includes(numId)))
+      map(chats => chats.filter(c => c.participants.map(String).includes(strId)))
     );
   }
 
@@ -64,11 +64,15 @@ export class ApiService {
     return this.http.post<Chat>(`${this.apiUrl}/chats`, chat);
   }
 
-  deleteChat(id: number): Observable<any> {
+  updateChat(id: number | string, chat: Partial<Chat>): Observable<Chat> {
+    return this.http.patch<Chat>(`${this.apiUrl}/chats/${id}`, chat);
+  }
+
+  deleteChat(id: number | string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/chats/${id}`);
   }
 
-  getMessages(chatId: number): Observable<Message[]> {
+  getMessages(chatId: number | string): Observable<Message[]> {
     return this.http.get<Message[]>(`${this.apiUrl}/messages?chatId=${chatId}`);
   }
 
@@ -76,11 +80,11 @@ export class ApiService {
     return this.http.post<Message>(`${this.apiUrl}/messages`, message);
   }
 
-  getNotifications(userId: number): Observable<Notification[]> {
+  getNotifications(userId: number | string): Observable<Notification[]> {
     return this.http.get<Notification[]>(`${this.apiUrl}/notifications?userId=${userId}&_sort=-createdAt`);
   }
 
-  markNotificationRead(id: number, read: boolean = true): Observable<Notification> {
+  markNotificationRead(id: number | string, read: boolean = true): Observable<Notification> {
     return this.http.patch<Notification>(`${this.apiUrl}/notifications/${id}`, { read });
   }
 
@@ -88,7 +92,7 @@ export class ApiService {
     return this.http.post<Notification>(`${this.apiUrl}/notifications`, notification);
   }
 
-  deleteNotification(id: number): Observable<any> {
+  deleteNotification(id: number | string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/notifications/${id}`);
   }
 }

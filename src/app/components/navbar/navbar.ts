@@ -15,6 +15,7 @@ export class Navbar implements OnInit {
   unreadCount$;
   notifications$;
   isNotificationsOpen = false;
+  isProfileMenuOpen = false;
 
   constructor(
     public authService: AuthService,
@@ -39,6 +40,7 @@ export class Navbar implements OnInit {
 
   logout() {
     this.authService.logout();
+    this.isProfileMenuOpen = false;
     this.router.navigate(['/login']);
   }
 
@@ -47,10 +49,23 @@ export class Navbar implements OnInit {
     if (this.isNotificationsOpen && this.notificationsDropdown && !this.notificationsDropdown.nativeElement.contains(event.target)) {
       this.isNotificationsOpen = false;
     }
+    this.isProfileMenuOpen = false;
   }
 
-  toggleNotifications() {
+  toggleNotifications(event?: Event) {
+    if (event) event.stopPropagation();
     this.isNotificationsOpen = !this.isNotificationsOpen;
+    if (this.isNotificationsOpen) {
+      this.isProfileMenuOpen = false;
+    }
+  }
+
+  toggleProfileMenu(event: Event) {
+    event.stopPropagation();
+    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+    if (this.isProfileMenuOpen) {
+      this.isNotificationsOpen = false;
+    }
   }
 
   markAsRead(notification: any, event: Event) {
@@ -60,13 +75,13 @@ export class Navbar implements OnInit {
     }
   }
 
-  deleteNotification(id: number, event: Event) {
+  deleteNotification(id: number | string, event: Event) {
     event.stopPropagation();
     this.notificationService.deleteNotification(id).subscribe();
   }
 
-  goToChat(chatId: number) {
+  goToChat(chatId: number | string) {
     this.isNotificationsOpen = false;
-    this.router.navigate(['/chat'], { queryParams: { chat: chatId } });
+    this.router.navigate(['/chat'], { queryParams: { chatId } }); // Changed 'chat' to 'chatId' for consistency with chat component
   }
 }

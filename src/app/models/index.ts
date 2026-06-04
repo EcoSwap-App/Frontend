@@ -1,10 +1,10 @@
 export interface User {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
   password?: string;
   avatar?: string;
-  universityId: number;
+  universityId: number | string;
   career: string;
   cycle: number;
   reputation: number;
@@ -14,12 +14,12 @@ export interface User {
 }
 
 export interface University {
-  id: number;
+  id: number | string;
   name: string;
 }
 
 export interface Category {
-  id: number;
+  id: number | string;
   name: string;
 }
 
@@ -32,13 +32,13 @@ export interface Model3D {
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   price: number;
   status: string;
-  categoryId: number;
-  userId: number;
+  categoryId: number | string;
+  userId: number | string;
   available: boolean;
   createdAt: string;
   images: string[];
@@ -46,29 +46,29 @@ export interface Product {
 }
 
 export interface Chat {
-  id: number;
-  productId: number;
-  participants: number[];
+  id: number | string;
+  productId: number | string;
+  participants: (number | string)[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Message {
-  id?: number;
-  chatId: number;
-  senderId: number;
+  id?: number | string;
+  chatId: number | string;
+  senderId: number | string;
   text: string;
   createdAt: string;
 }
 
 export interface Notification {
-  id: number;
-  userId: number;
+  id: number | string;
+  userId: number | string;
   type: string;
   text?: string;
   title?: string;
   message?: string;
-  chatId?: number;
+  chatId?: number | string;
   read: boolean;
   createdAt: string;
 }
