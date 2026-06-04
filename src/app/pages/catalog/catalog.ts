@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api';
+import { AuthService } from '../../services/auth';
 import { Product } from '../../models';
 import { ProductCard } from '../../components/product-card/product-card';
 import { FormsModule } from '@angular/forms';
@@ -17,25 +18,35 @@ export class Catalog implements OnInit {
   searchTerm: string = '';
   selectedCategory: number | '' = '';
 
-  constructor(private apiService: ApiService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private apiService: ApiService, 
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
-    this.apiService.getProducts().subscribe({
-      next: (data) => {
-        console.log('Catalog raw data:', data);
-        // Fallback for available in case it's string or boolean
-        this.products = data.filter(p => p.available === true || String(p.available) === 'true');
-        console.log('Products after availability filter:', this.products);
-        this.applyFilters(); // Call applyFilters to initialize filteredProducts properly
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('API Error in Catalog:', err);
-        this.products = [
-          {id: 1, title: 'Mock Book', description: 'API Error Fallback', price: 0, status: 'new', categoryId: 1, userId: 1, available: true, createdAt: '', images: []}
-        ];
-        this.applyFilters();
-      }
+    this.authService.currentUser$.subscribe(user => {
+      const apiCall = user 
+        ? this.apiService.getProductsExceptUserId(user.id)
+        : this.apiService.getProducts();
+
+      apiCall.subscribe({
+        next: (data) => {
+          console.log('Catalog raw data:', data);
+          // Fallback for available in case it's string or boolean
+          this.products = data.filter(p => p.available === true || String(p.available) === 'true');
+          console.log('Products after availability filter:', this.products);
+          this.applyFilters(); // Call applyFilters to initialize filteredProducts properly
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('API Error in Catalog:', err);
+          this.products = [
+            {id: 1, title: 'Mock Book', description: 'API Error Fallback', price: 0, status: 'new', categoryId: 1, userId: 1, available: true, createdAt: '', images: []}
+          ];
+          this.applyFilters();
+        }
+      });
     });
   }
 

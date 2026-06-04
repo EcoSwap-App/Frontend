@@ -39,16 +39,17 @@
             
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{{ product.title }}</h1>
             
-            <!-- Seller Reputation (Mock) -->
-            <div class="flex items-center mb-6 bg-blue-50 p-3 rounded-lg border border-blue-100 w-fit">
-              <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-400 to-green-400 flex items-center justify-center text-white font-bold text-lg mr-3">
-                {{ product.userId }}
+            <!-- Seller Info -->
+            <div class="flex items-center mb-6 bg-blue-50 p-3 rounded-xl border border-blue-100 w-fit" *ngIf="seller">
+              <div class="h-12 w-12 rounded-full overflow-hidden mr-3 border-2 border-white shadow-sm flex items-center justify-center bg-blue-200 text-blue-700 font-bold text-lg">
+                <img *ngIf="seller.avatar" [src]="seller.avatar" class="w-full h-full object-cover">
+                <span *ngIf="!seller.avatar">{{ seller.name.charAt(0) }}</span>
               </div>
               <div>
-                <p class="text-sm font-bold text-gray-900">Vendedor #{{ product.userId }}</p>
-                <div class="flex text-yellow-400 text-xs">
-                  <svg *ngFor="let s of getStars(4.5)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                  <svg *ngFor="let s of getEmptyStars(4.5)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                <p class="text-sm font-bold text-gray-900">{{ seller.name }}</p>
+                <div class="flex text-yellow-500 text-xs items-center gap-1 font-bold">
+                  <span>{{ seller.reputation }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                 </div>
               </div>
             </div>
@@ -63,12 +64,19 @@
               S/ {{ product.price | number:'1.2-2' }}
             </div>
             
-            <button (click)="requestProduct()" class="w-full bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Solicitar Producto
-            </button>
+            <div class="space-y-3">
+              <button (click)="requestProduct()" class="w-full bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Solicitar Producto
+              </button>
+
+              <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()" class="w-full bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                <span class="material-icons">chat</span>
+                Contactar al Vendedor
+              </button>
+            </div>
             <p class="text-center text-xs text-gray-500 mt-4">La solicitud notificará al vendedor a través de EcoSwap</p>
           </div>
         </div>

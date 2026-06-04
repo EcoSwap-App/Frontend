@@ -1,8 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api';
-import { Product } from '../../models';
+import { AuthService } from '../../services/auth';
+import { Product, Chat, User } from '../../models';
 import { ProductCard } from '../../components/product-card/product-card';
 
 @Component({
@@ -15,14 +16,20 @@ export class ProductDetails implements OnInit {
   product: Product | null = null;
   otherProducts: Product[] = [];
   selectedImage: string = '';
+  currentUser: User | null = null;
+  seller: User | null = null;
+  isOwner = false;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private apiService: ApiService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    this.currentUser = this.authService.currentUser;
     this.route.paramMap.subscribe(params => {
       const id = Number(params.get('id'));
       if (id) {
@@ -34,7 +41,23 @@ export class ProductDetails implements OnInit {
   loadProductDetails(id: number) {
     this.apiService.getProductById(id).subscribe(data => {
       this.product = data;
-      this.selectedImage = (data.images && data.images.length > 0) ? 'assets/' + data.images[0] : 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800';
+      if (data.images && data.images.length > 0) {
+        this.selectedImage = data.images[0].startsWith('data:image') ? data.images[0] : 'assets/' + data.images[0];
+      } else {
+        this.selectedImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800';
+      }
+
+      // Check if user is owner
+      const user = this.authService.currentUser;
+      if (user && Number(data.userId) === Number(user.id)) {
+        this.isOwner = true;
+      }
+      
+      // Load Seller Details
+      this.apiService.getUserById(Number(data.userId)).subscribe(sellerData => {
+        this.seller = sellerData;
+        this.cdr.detectChanges();
+      });
       
       // Load other products
       this.apiService.getProducts().subscribe(allProducts => {
@@ -57,5 +80,33 @@ export class ProductDetails implements OnInit {
 
   requestProduct() {
     alert(`Has solicitado el producto: ${this.product?.title}. El vendedor será notificado.`);
+  }
+
+  contactSeller() {
+    if (!this.currentUser || !this.product) return;
+    if (this.currentUser.id === this.product.userId) {
+      alert("No puedes contactarte a ti mismo.");
+      return;
+    }
+
+    // Check if a chat already exists
+    this.apiService.getChats(this.currentUser.id).subscribe(chats => {
+      const existingChat = chats.find(c => c.productId === this.product!.id && c.participants.includes(this.product!.userId));
+      
+      if (existingChat) {
+        this.router.navigate(['/chat'], { queryParams: { chatId: existingChat.id } });
+      } else {
+        // Create new chat
+        const newChat: Partial<Chat> = {
+          productId: this.product!.id,
+          participants: [this.currentUser!.id, this.product!.userId],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        this.apiService.createChat(newChat).subscribe(createdChat => {
+          this.router.navigate(['/chat'], { queryParams: { chatId: createdChat.id } });
+        });
+      }
+    });
   }
 }

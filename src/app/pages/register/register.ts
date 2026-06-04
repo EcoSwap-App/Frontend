@@ -14,6 +14,8 @@ import { HttpClient } from '@angular/common/http';
 export class Register {
   registerForm: FormGroup;
   error: string = '';
+  avatarBase64: string = '';
+  isCompressing: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -35,13 +37,72 @@ export class Register {
       ? null : { 'mismatch': true };
   }
 
+  async onFileSelected(event: any) {
+    if (event.target.files && event.target.files[0]) {
+      this.isCompressing = true;
+      try {
+        const file = event.target.files[0];
+        this.avatarBase64 = await this.compressImage(file);
+      } catch (err) {
+        console.error('Error compressing image:', err);
+      } finally {
+        this.isCompressing = false;
+      }
+    }
+  }
+
+  compressImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(file);
+      reader.onload = (event: any) => {
+        const img = new Image();
+        img.onerror = (e) => reject(e);
+        img.src = event.target.result;
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            const MAX_HEIGHT = 1200;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            resolve(dataUrl);
+          } catch (e) {
+            reject(e);
+          }
+        };
+      };
+    });
+  }
+
   onSubmit() {
-    if (this.registerForm.valid) {
+    if (this.registerForm.valid && !this.isCompressing) {
       // Mock registration
       const newUser = {
         name: this.registerForm.value.name,
         email: this.registerForm.value.email,
         password: this.registerForm.value.password,
+        avatar: this.avatarBase64,
         universityId: 1,
         career: 'General',
         cycle: 1,

@@ -19,6 +19,22 @@
       </div>
 
       <form class="space-y-4" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Avatar Upload -->
+        <div class="flex justify-center mb-6">
+          <div class="relative group cursor-pointer" (click)="fileInput.click()">
+            <div class="w-24 h-24 rounded-full border-4 border-white bg-green-50 shadow-md flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
+              <img *ngIf="avatarBase64 && !isCompressing" [src]="avatarBase64" class="w-full h-full object-cover">
+              <span *ngIf="!avatarBase64 && !isCompressing" class="material-icons text-3xl text-green-300">add_a_photo</span>
+              <div *ngIf="isCompressing" class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
+                <span class="material-icons animate-spin">sync</span>
+              </div>
+            </div>
+            <div class="text-center mt-2 text-xs font-medium text-gray-500">Foto (opcional)</div>
+            <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" [disabled]="isCompressing">
+          </div>
+        </div>
+
         <div>
           <input type="text" formControlName="name" required class="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" placeholder="Nombre completo">
         </div>

@@ -1,4 +1,4 @@
-<div [routerLink]="['/product', product.id]" class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative cursor-pointer border border-gray-100 flex flex-col h-full">
+<div [routerLink]="isMyProduct ? ['/my-product', product.id] : ['/product', product.id]" class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative cursor-pointer border border-gray-100 flex flex-col h-full">
   <!-- Tag -->
   <div class="absolute top-0 left-0 text-white text-xs font-bold px-3 py-1 -rotate-45 -translate-x-3 translate-y-3 w-24 text-center z-10 shadow-sm"
        [ngClass]="product.status === 'new' ? 'bg-blue-500' : 'bg-red-500'">
@@ -7,7 +7,7 @@
 
   <!-- Image (Placeholder since no actual assets) -->
   <div class="h-48 w-full bg-gray-200 relative overflow-hidden flex-shrink-0">
-    <img [src]="product.images && product.images.length ? 'assets/' + product.images[0] : 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=400'" alt="{{ product.title }}" class="w-full h-full object-cover">
+    <img [src]="product.images && product.images.length ? (product.images[0].startsWith('data:image') ? product.images[0] : 'assets/' + product.images[0]) : 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=400'" alt="{{ product.title }}" class="w-full h-full object-cover">
   </div>
 
   <div class="p-4 flex flex-col flex-1">

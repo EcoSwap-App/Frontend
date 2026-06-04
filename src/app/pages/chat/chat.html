@@ -1,0 +1,136 @@
+<div class="max-w-6xl mx-auto p-4 flex h-[calc(100vh-8rem)]">
+  
+  <!-- Sidebar -->
+  <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col rounded-l-xl overflow-hidden shadow-sm">
+    <div class="p-4 bg-gray-50 border-b border-gray-200">
+      <h2 class="text-xl font-bold text-gray-800">Mensajes</h2>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto">
+      <ng-container *ngIf="chats && chats.length > 0; else noChats">
+        <div *ngFor="let chat of chats" 
+             (click)="selectChat(chat)"
+             [class.bg-green-50]="activeChat?.id == chat.id"
+             [class.border-l-4]="activeChat?.id == chat.id"
+             [class.border-green-500]="activeChat?.id == chat.id"
+             class="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition duration-150 ease-in-out">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center font-bold text-lg"
+                   [ngClass]="getOtherUser(chat)?.avatar ? 'bg-transparent' : 'bg-green-100 text-green-700'">
+                <img *ngIf="getOtherUser(chat)?.avatar" [src]="getOtherUser(chat)?.avatar" class="w-full h-full object-cover">
+                <span *ngIf="!getOtherUser(chat)?.avatar">{{ getOtherUser(chat)?.name?.charAt(0) || 'C' }}</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-800">{{ getOtherUser(chat)?.name || 'Cargando...' }}</h3>
+                <p class="text-sm text-gray-500 truncate max-w-[150px]">{{ getProductTitle(chat) }}</p>
+                <span *ngIf="isProductSold(chat)" class="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">VENDIDO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #noChats>
+        <div class="p-8 text-center text-gray-500 flex flex-col items-center">
+          <span class="material-icons text-4xl mb-2 text-gray-300">chat_bubble_outline</span>
+          <p>No tienes conversaciones aún.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="w-2/3 bg-white flex flex-col rounded-r-xl shadow-sm border border-gray-200 border-l-0 relative">
+    <ng-container *ngIf="activeChat; else selectAChat">
+      <!-- Chat Header -->
+      <div class="p-4 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between z-10">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center font-bold"
+               [ngClass]="getOtherUser(activeChat)?.avatar ? 'bg-transparent' : 'bg-green-100 text-green-700'">
+            <img *ngIf="getOtherUser(activeChat)?.avatar" [src]="getOtherUser(activeChat)?.avatar" class="w-full h-full object-cover">
+            <span *ngIf="!getOtherUser(activeChat)?.avatar">{{ getOtherUser(activeChat)?.name?.charAt(0) || 'C' }}</span>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-800">{{ getOtherUser(activeChat)?.name || 'Cargando...' }}</h3>
+            <p class="text-xs text-green-600 font-medium">{{ getProductTitle(activeChat) }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <!-- Sold Badge / Action -->
+          <ng-container *ngIf="isProductSold(activeChat); else activeActions">
+            <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1.5 rounded-full border border-green-300 flex items-center">
+              <span class="material-icons text-sm mr-1">check_circle</span> Trato Hecho
+            </span>
+          </ng-container>
+          <ng-template #activeActions>
+            <button *ngIf="isProductOwner(activeChat)" 
+                    (click)="markAsSold()" 
+                    class="bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 flex items-center transition-colors">
+              <span class="material-icons text-sm mr-1">handshake</span> Marcar Vendido
+            </button>
+          </ng-template>
+
+          <button (click)="deleteActiveChat()" class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors" title="Eliminar Chat">
+            <span class="material-icons text-[20px]">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages List -->
+      <div #scrollContainer class="flex-1 overflow-y-auto p-6 space-y-4 bg-[#efeae2]">
+        <div *ngIf="isProductSold(activeChat)" class="flex justify-center mb-4">
+          <div class="bg-yellow-100 text-yellow-800 text-xs font-medium px-4 py-2 rounded-lg shadow-sm text-center">
+            Este producto ya ha sido vendido. El chat está cerrado.
+          </div>
+        </div>
+        
+        <div *ngFor="let msg of messages" 
+             [ngClass]="{'justify-end': isMyMessage(msg), 'justify-start': !isMyMessage(msg)}"
+             class="flex w-full">
+          
+          <div [ngClass]="{
+                  'bg-[#dcf8c6] text-gray-800 rounded-tr-sm': isMyMessage(msg),
+                  'bg-white text-gray-800 border border-gray-100 rounded-tl-sm': !isMyMessage(msg)
+               }"
+               class="max-w-[75%] rounded-lg px-3 py-2 shadow-sm relative text-[15px]">
+            <p class="pr-12 break-words">{{ msg.text }}</p>
+            <p class="text-[10px] text-gray-500 text-right absolute bottom-1.5 right-2 leading-none">
+              {{ msg.createdAt | date:'shortTime' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Input -->
+      <div class="p-3 bg-[#f0f2f5] border-t border-gray-200">
+        <form (ngSubmit)="sendMessage()" class="flex items-center space-x-2">
+          <input type="text" 
+                 [(ngModel)]="newMessageText" 
+                 name="message"
+                 autocomplete="off"
+                 [disabled]="isProductSold(activeChat)"
+                 [placeholder]="isProductSold(activeChat) ? 'El chat está cerrado' : 'Escribe un mensaje...'" 
+                 class="flex-1 border-0 shadow-sm rounded-full px-5 py-3 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-500 text-[15px]">
+          <button type="submit" 
+                  [disabled]="!newMessageText.trim() || isProductSold(activeChat)"
+                  class="bg-[#00a884] hover:bg-[#008f6f] disabled:opacity-50 text-white rounded-full p-2 w-11 h-11 flex items-center justify-center transition shadow-sm">
+            <span class="material-icons text-[20px] ml-1">send</span>
+          </button>
+        </form>
+      </div>
+    </ng-container>
+
+    <ng-template #selectAChat>
+      <div class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+        <div class="w-32 h-32 mb-6 opacity-20">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-medium text-gray-600 mb-2">Tus Mensajes de EcoSwap</h2>
+        <p class="text-sm">Selecciona una conversación para empezar a chatear.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

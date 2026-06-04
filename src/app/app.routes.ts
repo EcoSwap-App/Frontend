@@ -8,15 +8,21 @@ import { MyProducts } from './pages/my-products/my-products';
 import { Catalog } from './pages/catalog/catalog';
 
 import { ProductDetails } from './pages/product-details/product-details';
+import { ChatComponent } from './pages/chat/chat';
+import { MyProductDetails } from './pages/my-product-details/my-product-details';
+import { Profile } from './pages/profile/profile';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'home', component: Home },
+  { path: 'profile', component: Profile },
   { path: 'add-product', component: AddProduct },
   { path: 'my-products', component: MyProducts },
   { path: 'catalog', component: Catalog },
   { path: 'product/:id', component: ProductDetails },
+  { path: 'my-product/:id', component: MyProductDetails },
+  { path: 'chat', component: ChatComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];
