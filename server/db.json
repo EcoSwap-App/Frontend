@@ -8,7 +8,7 @@
       "universityId": 1,
       "career": "Systems Engineering",
       "cycle": 5,
-      "reputation": 4.5,
+      "reputation": 5,
       "verified": true,
       "active": true,
       "createdAt": "2026-04-01",
@@ -88,10 +88,13 @@
       "career": "General",
       "cycle": 7,
       "reputation": 0,
-      "verified": false,
+      "verified": true,
       "active": true,
       "createdAt": "2026-06-04",
-      "id": "KfzDGCRckmk"
+      "id": "KfzDGCRckmk",
+      "favorites": [
+        "6"
+      ]
     }
   ],
   "universities": [
@@ -661,6 +664,24 @@
       "reason": "Did not respond to messages",
       "status": "pending",
       "createdAt": "2026-04-09"
+    }
+  ],
+  "reviews": [
+    {
+      "reviewerId": "KfzDGCRckmk",
+      "targetUserId": 1,
+      "rating": 4,
+      "comment": "Muy bueno.",
+      "createdAt": "2026-06-09T04:59:21.485Z",
+      "id": "eKGwXvuJEv0"
+    },
+    {
+      "reviewerId": "KfzDGCRckmk",
+      "targetUserId": 1,
+      "rating": 5,
+      "comment": "asdasdasfasf",
+      "createdAt": "2026-06-09T05:02:44.529Z",
+      "id": "UkmJK8YVtNI"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

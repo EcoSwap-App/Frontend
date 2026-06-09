@@ -124,6 +124,44 @@
                 <p class="text-xs text-gray-500 font-medium uppercase">Ventas Realizadas</p>
               </div>
             </div>
+
+            <!-- Security / Verification -->
+            <div class="mt-8">
+              <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide border-b border-gray-100 pb-2 mb-4">Verificación de Cuenta</h3>
+              
+              <div *ngIf="user.verified" class="bg-blue-50 border border-blue-100 rounded-xl p-5 shadow-sm flex flex-col items-center sm:flex-row gap-4">
+                <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                  <span class="material-icons text-2xl">verified</span>
+                </div>
+                <div class="flex-1 text-center sm:text-left">
+                  <p class="text-base font-bold text-gray-900 flex items-center justify-center sm:justify-start gap-1">Estudiante Verificado <span class="material-icons text-blue-500 text-[18px]">verified</span></p>
+                  <p class="text-xs text-gray-500 mt-1">Tu cuenta institucional de UPC ha sido conectada. Tienes acceso completo a la plataforma.</p>
+                </div>
+              </div>
+
+              <div *ngIf="!user.verified" class="bg-orange-50 border border-orange-100 rounded-xl p-5 shadow-sm flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                  <div class="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <span class="material-icons">gpp_maybe</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-base font-bold text-gray-900">Cuenta No Verificada</p>
+                    <p class="text-xs text-gray-500 mt-1">Para generar más confianza en tus ventas, vincula tu correo institucional. Obtendrás la insignia de verificación azul.</p>
+                  </div>
+                </div>
+                <button (click)="verifyWithMicrosoft()" [disabled]="isVerifying" class="w-full sm:w-auto self-start sm:self-auto flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50 group">
+                  <svg *ngIf="!isVerifying" class="group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 21 21">
+                    <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                    <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                    <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                    <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                  </svg>
+                  <span *ngIf="isVerifying" class="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full"></span>
+                  {{ isVerifying ? 'Conectando...' : 'Vincular cuenta de Microsoft' }}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
         

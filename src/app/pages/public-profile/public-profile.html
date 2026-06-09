@@ -1,0 +1,194 @@
+<div class="bg-gray-50 min-h-screen py-10 font-sans">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="flex justify-center items-center py-20">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
+
+  <div *ngIf="!loading && user" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column: User Info -->
+      <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+          <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+          
+          <div class="px-6 pb-6 relative flex flex-col items-center">
+            <div class="w-24 h-24 rounded-full border-4 border-white absolute -top-12 bg-white object-cover flex items-center justify-center overflow-hidden shadow-sm">
+              <img *ngIf="user.avatar" [src]="user.avatar" class="w-full h-full object-cover">
+              <span *ngIf="!user.avatar" class="text-4xl font-bold text-blue-700 bg-blue-100 w-full h-full flex items-center justify-center">
+                {{ user.name.charAt(0) }}
+              </span>
+            </div>
+            
+            <div class="pt-14 text-center w-full">
+              <h1 class="text-2xl font-extrabold text-gray-900 flex items-center justify-center gap-1">
+                {{ user.name }}
+                <span *ngIf="user.verified" class="material-icons text-blue-500 text-[18px]" title="Estudiante Verificado">verified</span>
+              </h1>
+              <p class="text-gray-500 text-sm mt-1">{{ user.career }} • Ciclo {{ user.cycle }}</p>
+              
+              <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col items-center">
+                <div class="text-4xl font-black text-gray-900 mb-1">{{ user.reputation }}</div>
+                <div class="flex text-yellow-400 mb-1">
+                  <svg *ngFor="let s of getStars(user.reputation)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg *ngFor="let s of getEmptyStars(user.reputation)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">{{ reviews.length }} Reseñas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Content -->
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Active Products -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <span class="material-icons text-blue-500">inventory_2</span> En Venta por {{ user.name.split(' ')[0] }}
+          </h2>
+          
+          <div *ngIf="products.length === 0" class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <span class="material-icons text-gray-400 text-4xl mb-2">production_quantity_limits</span>
+            <p class="text-gray-500">Este usuario no tiene productos disponibles.</p>
+          </div>
+
+          <div *ngIf="products.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-product-card *ngFor="let product of products" [product]="product"></app-product-card>
+          </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span class="material-icons text-yellow-500">star</span> Reseñas de Estudiantes
+            </h2>
+            <button *ngIf="currentUser && currentUser.id !== user.id" (click)="showReviewForm = !showReviewForm" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl text-sm font-bold transition-colors">
+              {{ showReviewForm ? 'Cancelar' : 'Dejar Reseña' }}
+            </button>
+          </div>
+
+          <!-- Leave Review Form -->
+          <div *ngIf="showReviewForm" class="bg-blue-50/50 rounded-xl p-5 border border-blue-100 mb-8 animate-fade-in">
+            <form [formGroup]="reviewForm" (ngSubmit)="submitReview()">
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Calificación</label>
+                <div class="flex gap-2">
+                  <button type="button" *ngFor="let star of [1,2,3,4,5]" (click)="setRating(star)" class="focus:outline-none transition-transform hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" [ngClass]="star <= reviewForm.value.rating ? 'text-yellow-400' : 'text-gray-300'" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Comentario sobre tu experiencia</label>
+                <textarea formControlName="comment" class="w-full bg-white rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 resize-none h-24" placeholder="Ej. Excelente vendedor, el libro estaba en perfecto estado..."></textarea>
+              </div>
+              <div class="flex justify-end">
+                <button type="submit" [disabled]="reviewForm.invalid || submittingReview" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2">
+                  <span *ngIf="submittingReview" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                  Enviar Reseña
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Empty Reviews -->
+          <div *ngIf="reviews.length === 0" class="text-center py-8">
+            <span class="material-icons text-gray-300 text-5xl mb-2">star_border</span>
+            <p class="text-gray-500">Este usuario aún no tiene reseñas.</p>
+          </div>
+
+          <!-- Reviews List -->
+          <div class="space-y-6">
+            <div *ngFor="let review of reviews" class="border-b border-gray-100 last:border-0 pb-6 last:pb-0 flex gap-4">
+              <!-- Reviewer Avatar -->
+              <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-600 font-bold text-sm">
+                <img *ngIf="reviewers[review.reviewerId]?.avatar" [src]="reviewers[review.reviewerId].avatar" class="w-full h-full object-cover">
+                <span *ngIf="!reviewers[review.reviewerId]?.avatar">{{ reviewers[review.reviewerId] ? reviewers[review.reviewerId].name.charAt(0) : '?' }}</span>
+              </div>
+              
+              <!-- Review Content -->
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <h4 class="font-bold text-gray-900 text-sm">
+                    {{ reviewers[review.reviewerId]?.name || 'Usuario EcoSwap' }}
+                  </h4>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400">{{ review.createdAt | date:'shortDate' }}</span>
+                    <button *ngIf="currentUser && currentUser.id === review.reviewerId" (click)="promptDeleteReview(review)" class="text-gray-400 hover:text-red-500 transition-colors flex items-center" title="Eliminar reseña">
+                      <span class="material-icons text-[20px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="flex text-yellow-400 mb-2">
+                  <svg *ngFor="let s of getStars(review.rating)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg *ngFor="let s of getEmptyStars(review.rating)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                
+                <p class="text-sm text-gray-600">{{ review.comment }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- User not found -->
+  <div *ngIf="!loading && !user" class="text-center py-20">
+    <h2 class="text-2xl font-bold text-gray-900">Usuario no encontrado</h2>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteModal" class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+    <!-- Backdrop with strong blur and elegant dark tint -->
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity animate-fade-in" (click)="cancelDelete()"></div>
+    
+    <!-- Ultra Modern Modal Content -->
+    <div class="bg-white rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-md overflow-hidden relative z-10 animate-slide-up transform transition-all border border-white/20">
+      
+      <!-- Decorative Top Glow -->
+      <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-red-50 to-transparent pointer-events-none"></div>
+
+      <div class="p-8 pt-10 text-center relative z-10">
+        <!-- Floating Animated Icon -->
+        <div class="relative w-20 h-20 mx-auto mb-6 group">
+          <div class="absolute inset-0 bg-red-400 rounded-full blur-xl opacity-30 animate-pulse"></div>
+          <div class="relative w-full h-full bg-gradient-to-br from-red-50 to-rose-100 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-transform duration-300 hover:scale-110">
+            <span class="material-icons text-red-500 text-4xl">delete_outline</span>
+          </div>
+        </div>
+        
+        <h3 class="text-2xl font-black text-gray-900 mb-3 tracking-tight">¿Eliminar Reseña?</h3>
+        <p class="text-gray-500 text-[15px] leading-relaxed mb-8 px-2">
+          Esta acción removerá tu comentario permanentemente y recalculará la reputación del usuario. <strong class="text-gray-700 font-bold">No se puede deshacer.</strong>
+        </p>
+        
+        <!-- Premium Actions -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button (click)="cancelDelete()" [disabled]="deletingReview" class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-3.5 px-4 rounded-2xl transition-all duration-200 disabled:opacity-50">
+            Mantener
+          </button>
+          <button (click)="confirmDelete()" [disabled]="deletingReview" class="flex-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg shadow-red-500/30 transition-all duration-200 hover:shadow-red-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0">
+            <span *ngIf="deletingReview" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+            {{ deletingReview ? 'Borrando...' : 'Sí, Eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

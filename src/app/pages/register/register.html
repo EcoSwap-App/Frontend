@@ -18,6 +18,25 @@
         {{ error }}
       </div>
 
+      <!-- Microsoft Login -->
+      <button type="button" (click)="registerWithMicrosoft()" [disabled]="isMicrosoftLoading" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50 mb-6 group">
+        <svg *ngIf="!isMicrosoftLoading" class="group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21">
+          <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+          <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+          <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+          <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+        </svg>
+        <span *ngIf="isMicrosoftLoading" class="animate-spin h-5 w-5 border-2 border-gray-400 border-t-transparent rounded-full"></span>
+        {{ isMicrosoftLoading ? 'Conectando...' : 'Registrarse con Microsoft (UPC)' }}
+      </button>
+
+      <div class="relative flex items-center justify-center mb-6">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-200"></div>
+        </div>
+        <div class="relative bg-white px-4 text-sm font-medium text-gray-400">O crea tu cuenta manual</div>
+      </div>
+
       <form class="space-y-3" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         
         <!-- Avatar Upload -->

@@ -50,10 +50,14 @@
             Categorías
           </h3>
           <div class="space-y-2">
-            <a *ngFor="let cat of categories" routerLink="/catalog" [queryParams]="{category: cat.id}" class="flex items-center justify-between group cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition-colors">
+            <a *ngFor="let cat of categories" (click)="toggleCategory(cat.id)" 
+               class="flex items-center justify-between group cursor-pointer p-2 rounded-lg transition-colors"
+               [ngClass]="{'bg-blue-50': selectedCategoryId == cat.id, 'hover:bg-gray-50': selectedCategoryId != cat.id}">
               <div class="flex items-center gap-3">
-                <span class="material-icons text-gray-400 group-hover:text-green-500 transition-colors text-sm">folder</span>
-                <span class="text-gray-700 text-sm font-medium group-hover:text-gray-900">{{ cat.name }}</span>
+                <span class="material-icons transition-colors text-sm" 
+                      [ngClass]="{'text-blue-500': selectedCategoryId == cat.id, 'text-gray-400 group-hover:text-green-500': selectedCategoryId != cat.id}">folder</span>
+                <span class="text-sm font-medium transition-colors" 
+                      [ngClass]="{'text-blue-700 font-bold': selectedCategoryId == cat.id, 'text-gray-700 group-hover:text-gray-900': selectedCategoryId != cat.id}">{{ cat.name }}</span>
               </div>
             </a>
           </div>

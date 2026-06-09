@@ -41,6 +41,7 @@ export class AddProduct implements OnInit {
     private cdr: ChangeDetectorRef
   ) {
     this.productForm = this.fb.group({
+      type: ['sale', Validators.required],
       title: ['', Validators.required],
       description: ['', Validators.required],
       status: ['', Validators.required],
@@ -153,6 +154,7 @@ export class AddProduct implements OnInit {
         categoryId: Number(formValue.categoryId),
         userId: user ? user.id : 1,
         available: true,
+        type: formValue.type,
         createdAt: new Date().toISOString().split('T')[0],
         images: this.imagesBase64
       };

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Product } from '../../models';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { ApiService } from '../../services/api';
 
 @Component({
   selector: 'app-product-card',
@@ -13,14 +14,29 @@ import { AuthService } from '../../services/auth';
 export class ProductCard implements OnInit {
   @Input() product!: Product;
   isMyProduct = false;
+  isFavorite = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private apiService: ApiService) {}
 
   ngOnInit() {
     const user = this.authService.currentUser;
     if (user && this.product) {
       this.isMyProduct = Number(this.product.userId) === Number(user.id);
+      this.isFavorite = (user.favorites || []).map(String).includes(String(this.product.id));
     }
+  }
+
+  toggleFavorite(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const user = this.authService.currentUser;
+    if (!user) return;
+
+    this.isFavorite = !this.isFavorite; // Optimistic UI update
+    
+    this.apiService.toggleFavorite(user.id, this.product.id, user.favorites || []).subscribe(updatedUser => {
+      this.authService.updateCurrentUser(updatedUser);
+    });
   }
 
   getStars(reputation: number): number[] {

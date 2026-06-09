@@ -11,6 +11,7 @@ export interface User {
   verified: boolean;
   active: boolean;
   createdAt: string;
+  favorites?: (number | string)[];
 }
 
 export interface University {
@@ -40,6 +41,7 @@ export interface Product {
   categoryId: number | string;
   userId: number | string;
   available: boolean;
+  type?: 'sale' | 'wanted';
   createdAt: string;
   images: string[];
   model3d?: Model3D;
@@ -70,5 +72,14 @@ export interface Notification {
   message?: string;
   chatId?: number | string;
   read: boolean;
+  createdAt: string;
+}
+
+export interface Review {
+  id?: number | string;
+  reviewerId: number | string;
+  targetUserId: number | string;
+  rating: number;
+  comment: string;
   createdAt: string;
 }

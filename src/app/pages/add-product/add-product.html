@@ -19,6 +19,23 @@
         
         <!-- Left: Form Fields -->
         <div class="flex-1 p-8 md:p-10 border-b md:border-b-0 md:border-r border-gray-100 space-y-6">
+          
+          <!-- Tipo de Publicacion -->
+          <div class="bg-gray-50 p-1.5 rounded-2xl flex gap-1 mb-8 border border-gray-200">
+            <button type="button" 
+                    (click)="productForm.patchValue({type: 'sale'})"
+                    class="flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200"
+                    [ngClass]="productForm.value.type === 'sale' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'">
+              <span class="material-icons">storefront</span> Quiero vender
+            </button>
+            <button type="button" 
+                    (click)="productForm.patchValue({type: 'wanted'})"
+                    class="flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200"
+                    [ngClass]="productForm.value.type === 'wanted' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'">
+              <span class="material-icons">search</span> Estoy buscando
+            </button>
+          </div>
+
           <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <span class="material-icons text-blue-500">description</span> Detalles Básicos
           </h2>
@@ -36,9 +53,11 @@
           </div>
           
           <div class="grid grid-cols-2 gap-4">
-            <!-- Precio -->
+            <!-- Precio / Presupuesto -->
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Precio (S/)</label>
+              <label class="block text-sm font-bold text-gray-700 mb-1">
+                {{ productForm.value.type === 'sale' ? 'Precio (S/)' : 'Presupuesto Máx. (S/)' }}
+              </label>
               <div class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">S/</span>
                 <input type="number" formControlName="price" class="w-full bg-gray-50 rounded-xl pl-9 pr-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 transition-all" placeholder="0.00">
@@ -47,11 +66,14 @@
             
             <!-- Estado -->
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Estado</label>
+              <label class="block text-sm font-bold text-gray-700 mb-1">
+                {{ productForm.value.type === 'sale' ? 'Estado' : 'Preferencia de estado' }}
+              </label>
               <select formControlName="status" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 transition-all appearance-none cursor-pointer">
                 <option value="" disabled selected>Selecciona</option>
                 <option value="new">Nuevo</option>
                 <option value="used">Usado</option>
+                <option *ngIf="productForm.value.type === 'wanted'" value="any">Indiferente (Nuevo o Usado)</option>
               </select>
             </div>
           </div>
@@ -77,7 +99,8 @@
         <!-- Right: Image Upload -->
         <div class="flex-1 p-8 md:p-10 bg-gray-50/50 flex flex-col">
           <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <span class="material-icons text-green-500">photo_library</span> Galería de Fotos
+            <span class="material-icons text-green-500">photo_library</span> 
+            Galería de Fotos {{ productForm.value.type === 'wanted' ? '(Opcional)' : '' }}
           </h2>
           
           <div class="flex-1 flex flex-col justify-start">
@@ -133,9 +156,9 @@
 
       <!-- Action Footer -->
       <div class="bg-gray-50 border-t border-gray-100 p-6 flex justify-end">
-        <button type="submit" [disabled]="!productForm.valid || isCompressing || imagesBase64.length === 0" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2">
+        <button type="submit" [disabled]="!productForm.valid || isCompressing || (productForm.value.type === 'sale' && imagesBase64.length === 0)" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2">
           <span class="material-icons">send</span>
-          Publicar Producto
+          {{ productForm.value.type === 'sale' ? 'Publicar Producto' : 'Publicar Solicitud' }}
         </button>
       </div>
     </form>

@@ -16,6 +16,7 @@ export class Register {
   error: string = '';
   avatarBase64: string = '';
   isCompressing: boolean = false;
+  isMicrosoftLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -139,5 +140,40 @@ export class Register {
         }
       });
     }
+  }
+
+  registerWithMicrosoft() {
+    this.isMicrosoftLoading = true;
+    this.error = '';
+    
+    setTimeout(() => {
+      const mockRandom = Math.floor(Math.random() * 10000);
+      const newUser = {
+        name: `Estudiante Verificado ${mockRandom}`,
+        email: `u202${mockRandom}@upc.edu.pe`,
+        password: 'password123',
+        avatar: '',
+        universityId: 1,
+        career: 'No especificada',
+        cycle: 1,
+        reputation: 0,
+        verified: true, // Auto-verified by Microsoft SSO!
+        active: true,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+      
+      this.http.post('http://localhost:3001/users', newUser).subscribe({
+        next: () => {
+          this.isMicrosoftLoading = false;
+          this.authService.login(newUser.email).subscribe(() => {
+            this.router.navigate(['/home']);
+          });
+        },
+        error: () => {
+          this.isMicrosoftLoading = false;
+          this.error = 'Error al conectar con Microsoft.';
+        }
+      });
+    }, 1500);
   }
 }

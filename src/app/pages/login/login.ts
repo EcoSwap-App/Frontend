@@ -13,6 +13,7 @@ import { AuthService } from '../../services/auth';
 export class Login {
   loginForm: FormGroup;
   error: string = '';
+  isMicrosoftLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -35,5 +36,32 @@ export class Login {
         }
       });
     }
+  }
+
+  loginWithMicrosoft() {
+    this.isMicrosoftLoading = true;
+    this.error = '';
+    
+    // Simulate OAuth redirect and processing
+    setTimeout(() => {
+      // In this mock MVP, if the user typed an email, we try to log them in with that email.
+      // Otherwise, we fallback to our default test user Juan Perez.
+      const emailToUse = this.loginForm.value.email || 'juan@upc.edu.pe';
+      
+      this.authService.login(emailToUse).subscribe({
+        next: (users) => {
+          this.isMicrosoftLoading = false;
+          if (users && users.length > 0) {
+            this.router.navigate(['/home']);
+          } else {
+            this.error = 'Error al conectar con Microsoft. El usuario no existe en la base de datos simulada.';
+          }
+        },
+        error: () => {
+          this.isMicrosoftLoading = false;
+          this.error = 'Error de conexión con el servidor.';
+        }
+      });
+    }, 1500);
   }
 }

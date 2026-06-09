@@ -8,12 +8,18 @@
         <!-- Left: Image Gallery -->
         <div class="md:w-1/2 p-6 flex flex-col items-center">
           <!-- Main Image -->
-          <div class="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4 border border-gray-200">
+          <div *ngIf="product.type !== 'wanted' || (product.images && product.images.length > 0)" class="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4 border border-gray-200">
             <img [src]="selectedImage" [alt]="product.title" class="w-full h-full object-cover">
           </div>
           
+          <div *ngIf="product.type === 'wanted' && (!product.images || product.images.length === 0)" class="w-full aspect-square rounded-xl overflow-hidden bg-purple-50 mb-4 border border-purple-100 flex flex-col items-center justify-center text-purple-300">
+            <span class="material-icons text-7xl mb-4">person_search</span>
+            <span class="font-bold text-lg text-purple-400">Buscando Material</span>
+            <p class="text-sm text-purple-300 text-center px-8 mt-2">Este estudiante está buscando comprar este artículo, no venderlo.</p>
+          </div>
+          
           <!-- Thumbnails -->
-          <div class="flex gap-4 w-full overflow-x-auto pb-2">
+          <div *ngIf="product.images && product.images.length > 0" class="flex gap-4 w-full overflow-x-auto pb-2">
             <!-- Mock multiple images based on the first image for demonstration -->
             <button (click)="selectedImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800'" class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 focus:outline-none" [class.border-blue-500]="selectedImage === 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800'" [class.border-transparent]="selectedImage !== 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800'">
               <img src="https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover">
@@ -31,16 +37,21 @@
         <div class="md:w-1/2 p-8 md:p-10 bg-white border-l border-gray-100 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                {{ product.status === 'new' ? 'NUEVO' : 'USADO' }}
-              </span>
+              <div class="flex gap-2">
+                <span *ngIf="product.type === 'wanted'" class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                  <span class="material-icons text-[12px]">search</span> SE BUSCA
+                </span>
+                <span class="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  {{ product.status === 'new' ? 'NUEVO' : (product.status === 'any' ? 'NUEVO / USADO' : 'USADO') }}
+                </span>
+              </div>
               <span class="text-sm text-gray-400">Publicado: {{ product.createdAt | date:'shortDate' }}</span>
             </div>
             
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{{ product.title }}</h1>
             
             <!-- Seller Info -->
-            <div class="flex items-center mb-6 bg-blue-50 p-3 rounded-xl border border-blue-100 w-fit" *ngIf="seller">
+            <div [routerLink]="['/user', seller.id]" class="flex items-center mb-6 bg-blue-50 hover:bg-blue-100 p-3 rounded-xl border border-blue-100 w-fit cursor-pointer transition-colors" *ngIf="seller" title="Ver perfil del estudiante">
               <div class="h-12 w-12 rounded-full overflow-hidden mr-3 border-2 border-white shadow-sm flex items-center justify-center bg-blue-200 text-blue-700 font-bold text-lg">
                 <img *ngIf="seller.avatar" [src]="seller.avatar" class="w-full h-full object-cover">
                 <span *ngIf="!seller.avatar">{{ seller.name.charAt(0) }}</span>
@@ -65,19 +76,31 @@
             </div>
             
             <div class="space-y-3">
-              <button (click)="requestProduct()" class="w-full bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Solicitar Producto
-              </button>
+              <!-- Sale Actions -->
+              <ng-container *ngIf="product.type !== 'wanted'">
+                <button (click)="requestProduct()" class="w-full bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                  <span class="material-icons">shopping_cart</span>
+                  Comprar Producto
+                </button>
 
-              <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()" class="w-full bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-transform hover:scale-105 flex justify-center items-center gap-2">
-                <span class="material-icons">chat</span>
-                Contactar al Vendedor
-              </button>
+                <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()" class="w-full bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                  <span class="material-icons">chat</span>
+                  Preguntar al Vendedor
+                </button>
+              </ng-container>
+
+              <!-- Wanted Actions -->
+              <ng-container *ngIf="product.type === 'wanted'">
+                <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                  <span class="material-icons">waving_hand</span>
+                  ¡Yo lo tengo! Ofrecer
+                </button>
+              </ng-container>
+
             </div>
-            <p class="text-center text-xs text-gray-500 mt-4">La solicitud notificará al vendedor a través de EcoSwap</p>
+            <p class="text-center text-xs text-gray-500 mt-4">
+              {{ product.type === 'wanted' ? 'Contacta al comprador para negociar la entrega' : 'La solicitud notificará al vendedor a través de EcoSwap' }}
+            </p>
           </div>
         </div>
       </div>

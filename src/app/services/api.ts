@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { Product, Category, User, Chat, Message, Notification } from '../models';
+import { Product, Category, User, Chat, Message, Notification, Review } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -53,6 +53,17 @@ export class ApiService {
     return this.http.patch<User>(`${this.apiUrl}/users/${id}`, user);
   }
 
+  toggleFavorite(userId: number | string, productId: number | string, currentFavorites: (number | string)[] = []): Observable<User> {
+    const strProductId = String(productId);
+    const isFavorited = currentFavorites.map(String).includes(strProductId);
+    
+    const newFavorites = isFavorited 
+      ? currentFavorites.filter(id => String(id) !== strProductId) 
+      : [...currentFavorites, productId];
+      
+    return this.updateUser(userId, { favorites: newFavorites });
+  }
+
   getChats(userId: number | string): Observable<Chat[]> {
     const strId = String(userId);
     return this.http.get<Chat[]>(`${this.apiUrl}/chats`).pipe(
@@ -94,5 +105,17 @@ export class ApiService {
 
   deleteNotification(id: number | string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/notifications/${id}`);
+  }
+
+  getReviews(userId: number | string): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.apiUrl}/reviews?targetUserId=${userId}&_sort=-createdAt`);
+  }
+
+  addReview(review: Partial<Review>): Observable<Review> {
+    return this.http.post<Review>(`${this.apiUrl}/reviews`, review);
+  }
+
+  deleteReview(id: number | string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/reviews/${id}`);
   }
 }

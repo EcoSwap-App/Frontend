@@ -24,6 +24,8 @@ export class Profile implements OnInit {
   editData = { career: '', cycle: 1 };
   availableCycles = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+  isVerifying: boolean = false;
+
   constructor(
     private authService: AuthService,
     private apiService: ApiService,
@@ -52,6 +54,28 @@ export class Profile implements OnInit {
 
   cancelEditingInfo() {
     this.isEditingInfo = false;
+  }
+
+  verifyWithMicrosoft() {
+    if (!this.user || this.user.verified) return;
+    
+    this.isVerifying = true;
+    
+    // Simulate OAuth and processing time
+    setTimeout(() => {
+      this.apiService.updateUser(this.user!.id, { verified: true }).subscribe({
+        next: (savedUser) => {
+          this.authService.updateCurrentUser(savedUser);
+          this.isVerifying = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error verifying user', err);
+          this.isVerifying = false;
+          this.cdr.detectChanges();
+        }
+      });
+    }, 2000);
   }
 
   saveInfo() {

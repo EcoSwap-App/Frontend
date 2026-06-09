@@ -11,6 +11,8 @@ import { ProductDetails } from './pages/product-details/product-details';
 import { ChatComponent } from './pages/chat/chat';
 import { MyProductDetails } from './pages/my-product-details/my-product-details';
 import { Profile } from './pages/profile/profile';
+import { Favorites } from './pages/favorites/favorites';
+import { PublicProfile } from './pages/public-profile/public-profile';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -20,9 +22,11 @@ export const routes: Routes = [
   { path: 'add-product', component: AddProduct },
   { path: 'my-products', component: MyProducts },
   { path: 'catalog', component: Catalog },
+  { path: 'favorites', component: Favorites },
   { path: 'product/:id', component: ProductDetails },
   { path: 'my-product/:id', component: MyProductDetails },
   { path: 'chat', component: ChatComponent },
+  { path: 'user/:id', component: PublicProfile },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

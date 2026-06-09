@@ -1,14 +1,43 @@
 <div [routerLink]="isMyProduct ? ['/my-product', product.id] : ['/product', product.id]" class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 relative cursor-pointer border border-gray-100 flex flex-col h-full group">
-  <!-- Tag -->
-  <div class="absolute top-4 left-4 text-white text-[10px] font-extrabold tracking-wider px-3 py-1 rounded-full z-10 shadow-sm backdrop-blur-sm"
-       [ngClass]="product.status === 'new' ? 'bg-blue-500/90' : 'bg-red-500/90'">
-    {{ product.status === 'new' ? 'NUEVO' : 'USADO' }}
+  <!-- Tags -->
+  <div class="absolute top-4 left-4 flex gap-2 z-10">
+    <div *ngIf="product.type === 'wanted'" class="bg-purple-600/90 text-white text-[10px] font-extrabold tracking-wider px-3 py-1 rounded-full shadow-sm backdrop-blur-sm flex items-center gap-1">
+      <span class="material-icons text-[10px]">search</span> SE BUSCA
+    </div>
+    <div class="text-white text-[10px] font-extrabold tracking-wider px-3 py-1 rounded-full shadow-sm backdrop-blur-sm"
+         [ngClass]="product.status === 'new' ? 'bg-blue-500/90' : (product.status === 'any' ? 'bg-gray-500/90' : 'bg-red-500/90')">
+      {{ product.status === 'new' ? 'NUEVO' : (product.status === 'any' ? 'NUEVO/USADO' : 'USADO') }}
+    </div>
   </div>
 
-  <!-- Image (Placeholder since no actual assets) -->
-  <div class="h-52 w-full bg-gray-100 relative overflow-hidden flex-shrink-0">
+  <!-- Favorite Button -->
+  <button (click)="toggleFavorite($event)" 
+          class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center z-20 shadow-sm hover:scale-110 transition-transform duration-200">
+    <span class="material-icons text-[18px] transition-colors duration-200"
+          [ngClass]="isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-400'">
+      {{ isFavorite ? 'favorite' : 'favorite_border' }}
+    </span>
+  </button>
+
+  <!-- Image -->
+  <div class="h-52 w-full bg-gray-50 relative overflow-hidden flex-shrink-0">
     <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors z-10"></div>
-    <img [src]="product.images && product.images.length ? (product.images[0].startsWith('data:image') ? product.images[0] : 'assets/' + product.images[0]) : 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=400'" alt="{{ product.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+    
+    <ng-container *ngIf="product.images && product.images.length > 0">
+      <img [src]="product.images[0].startsWith('data:image') ? product.images[0] : 'assets/' + product.images[0]" alt="{{ product.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+    </ng-container>
+
+    <!-- Wanted Placeholder if no image -->
+    <div *ngIf="product.type === 'wanted' && (!product.images || product.images.length === 0)" class="w-full h-full flex flex-col items-center justify-center text-purple-300 bg-purple-50 group-hover:bg-purple-100 transition-colors">
+      <span class="material-icons text-5xl mb-2">person_search</span>
+      <span class="font-bold text-sm text-purple-400">Buscando Material</span>
+    </div>
+
+    <!-- General Placeholder if no image (Sale) -->
+    <div *ngIf="product.type !== 'wanted' && (!product.images || product.images.length === 0)" class="w-full h-full flex flex-col items-center justify-center text-gray-300">
+      <span class="material-icons text-5xl mb-2">inventory_2</span>
+      <span class="font-bold text-sm text-gray-400">Sin Imagen</span>
+    </div>
   </div>
 
   <div class="p-5 flex flex-col flex-1">

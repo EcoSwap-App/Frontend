@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api';
 import { AuthService } from '../../services/auth';
 import { Product, Chat, User } from '../../models';
@@ -9,7 +9,7 @@ import { ProductCard } from '../../components/product-card/product-card';
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [CommonModule, ProductCard],
+  imports: [CommonModule, ProductCard, RouterLink],
   templateUrl: './product-details.html',
 })
 export class ProductDetails implements OnInit {
