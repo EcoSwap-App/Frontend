@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
 import { AuthService } from '../../services/auth';
 import { Product, Category, User } from '../../models';
@@ -9,7 +10,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ProductCard, RouterLink],
+  imports: [CommonModule, FormsModule, ProductCard, RouterLink],
   templateUrl: './home.html',
 })
 export class Home implements OnInit {
@@ -19,6 +20,18 @@ export class Home implements OnInit {
   currentUser: User | null = null;
   trendingProducts: Product[] = [];
   selectedCategoryId: string | number | null = null;
+  feedType: 'sale' | 'wanted' = 'sale';
+
+  // Inline Post Form State
+  postContent: string = '';
+  postImageBase64: string | null = null;
+  postType: 'sale' | 'wanted' = 'sale';
+  postCategoryId: string | number = '';
+  postPrice: number | null = null;
+  postStatus: string = 'any';
+  
+  showDetails: boolean = false;
+  isPublishing: boolean = false;
 
   constructor(
     private apiService: ApiService,
@@ -38,10 +51,9 @@ export class Home implements OnInit {
         next: (data) => {
           // Store all products to allow filtering
           this.allProducts = [...data].reverse();
-          // Newest first for the feed
-          this.products = this.allProducts.slice(0, 10);
-          // Popular/Trending for right sidebar (mock logic)
-          this.trendingProducts = [...data].sort((a, b) => b.price - a.price).slice(0, 3);
+          this.applyFilters();
+          // Popular/Trending for right sidebar (mock logic, only sales)
+          this.trendingProducts = [...data].filter(p => p.type !== 'wanted').sort((a, b) => b.price - a.price).slice(0, 3);
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -56,16 +68,113 @@ export class Home implements OnInit {
     });
   }
 
+  setFeedType(type: 'sale' | 'wanted') {
+    if (this.feedType !== type) {
+      this.feedType = type;
+      this.applyFilters();
+    }
+  }
+
   toggleCategory(categoryId: string | number) {
     if (this.selectedCategoryId === categoryId) {
-      // Toggle off
-      this.selectedCategoryId = null;
-      this.products = this.allProducts.slice(0, 10);
+      this.selectedCategoryId = null; // Toggle off
     } else {
-      // Toggle on
-      this.selectedCategoryId = categoryId;
-      this.products = this.allProducts.filter(p => p.categoryId == categoryId).slice(0, 10);
+      this.selectedCategoryId = categoryId; // Toggle on
     }
+    this.applyFilters();
+  }
+
+  applyFilters() {
+    let filtered = this.allProducts;
+
+    // 1. Filter by Category
+    if (this.selectedCategoryId !== null) {
+      filtered = filtered.filter(p => p.categoryId == this.selectedCategoryId);
+    }
+
+    // 2. Filter by Feed Type (sale vs wanted)
+    if (this.feedType === 'wanted') {
+      filtered = filtered.filter(p => p.type === 'wanted');
+    } else {
+      filtered = filtered.filter(p => p.type !== 'wanted'); // default 'sale' or undefined
+    }
+
+    this.products = filtered.slice(0, 10);
     this.cdr.detectChanges();
+  }
+
+  // --- Inline Publishing Logic ---
+
+  toggleDetails() {
+    this.showDetails = !this.showDetails;
+  }
+
+  onFileSelected(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.postImageBase64 = e.target?.result as string;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage() {
+    this.postImageBase64 = null;
+  }
+
+  publishPost() {
+    if (!this.currentUser) return;
+    if (!this.postContent.trim() && !this.postImageBase64) return;
+
+    this.isPublishing = true;
+
+    // Default values if some fields are left empty
+    const finalType = this.postType;
+    const finalPrice = finalType === 'wanted' ? 0 : (this.postPrice || 0);
+    const finalCategory = this.postCategoryId || (this.categories.length > 0 ? this.categories[0].id : 1);
+    
+    // Create a meaningful title from content (first 50 chars)
+    let finalTitle = this.postContent.trim().split('\n')[0].substring(0, 50);
+    if (finalTitle.length === 50) finalTitle += '...';
+    if (!finalTitle) finalTitle = finalType === 'wanted' ? 'Busco material' : 'Vendo material';
+
+    const newPost: Partial<Product> = {
+      title: finalTitle,
+      description: this.postContent.trim(),
+      price: finalPrice,
+      status: this.postStatus,
+      categoryId: finalCategory,
+      userId: this.currentUser.id,
+      available: true,
+      type: finalType,
+      createdAt: new Date().toISOString(),
+      images: this.postImageBase64 ? [this.postImageBase64] : []
+    };
+
+    this.apiService.addProduct(newPost).subscribe({
+      next: (createdPost) => {
+        // Reset form
+        this.postContent = '';
+        this.postImageBase64 = null;
+        this.postPrice = null;
+        this.showDetails = false;
+        this.isPublishing = false;
+        
+        // Add to feed locally
+        this.allProducts.unshift(createdPost);
+        
+        // Switch to the correct feed type to show the new post
+        this.setFeedType(finalType);
+        this.applyFilters();
+      },
+      error: (err) => {
+        console.error('Error publishing post', err);
+        this.isPublishing = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

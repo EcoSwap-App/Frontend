@@ -89,7 +89,8 @@
              [ngClass]="{'justify-end': isMyMessage(msg), 'justify-start': !isMyMessage(msg)}"
              class="flex w-full">
           
-          <div [ngClass]="{
+          <!-- Normal Text Message -->
+          <div *ngIf="msg.type !== 'meetup'" [ngClass]="{
                   'bg-[#dcf8c6] text-gray-800 rounded-tr-sm': isMyMessage(msg),
                   'bg-white text-gray-800 border border-gray-100 rounded-tl-sm': !isMyMessage(msg)
                }"
@@ -99,7 +100,50 @@
               {{ msg.createdAt | date:'shortTime' }}
             </p>
           </div>
+
+          <!-- Meetup Proposal Message -->
+          <div *ngIf="msg.type === 'meetup' && msg.meetup" [ngClass]="{
+                  'bg-blue-50 border-blue-200 rounded-tr-sm': isMyMessage(msg),
+                  'bg-white border-gray-200 rounded-tl-sm': !isMyMessage(msg)
+               }"
+               class="max-w-[85%] sm:max-w-[300px] border rounded-xl shadow-sm overflow-hidden text-[14px]">
+            <div class="bg-blue-500 text-white px-3 py-2 flex items-center gap-2">
+              <span class="material-icons text-[18px]">event</span>
+              <span class="font-bold">Propuesta de Encuentro</span>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="flex items-start gap-2">
+                <span class="material-icons text-gray-400 text-[16px] mt-0.5">place</span>
+                <span class="text-gray-700 font-medium">{{ msg.meetup.location }}</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="material-icons text-gray-400 text-[16px] mt-0.5">schedule</span>
+                <span class="text-gray-700 font-medium">{{ msg.meetup.date | date:'mediumDate' }} a las {{ msg.meetup.time }}</span>
+              </div>
+              
+              <!-- Status & Actions -->
+              <div class="pt-2 mt-2 border-t border-gray-200">
+                <div *ngIf="msg.meetup.status === 'pending'" class="flex justify-between items-center">
+                  <span *ngIf="isMyMessage(msg)" class="text-gray-500 italic text-xs">Esperando respuesta...</span>
+                  <div *ngIf="!isMyMessage(msg)" class="flex gap-2 w-full">
+                    <button (click)="respondToMeetup(msg, 'accepted')" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-1.5 rounded-lg font-medium transition-colors text-xs">Aceptar</button>
+                    <button (click)="respondToMeetup(msg, 'declined')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-lg font-medium transition-colors text-xs">Rechazar</button>
+                  </div>
+                </div>
+                <div *ngIf="msg.meetup.status === 'accepted'" class="flex items-center gap-1 text-green-600 font-bold text-sm">
+                  <span class="material-icons text-[16px]">check_circle</span> Encuentro Confirmado
+                </div>
+                <div *ngIf="msg.meetup.status === 'declined'" class="flex items-center gap-1 text-red-500 font-bold text-sm">
+                  <span class="material-icons text-[16px]">cancel</span> Propuesta Rechazada
+                </div>
+              </div>
+              <p class="text-[10px] text-gray-400 text-right mt-1">
+                {{ msg.createdAt | date:'shortTime' }}
+              </p>
+            </div>
+          </div>
         </div>
+
       </div>
 
       <!-- Message Input -->
@@ -112,6 +156,15 @@
                  [disabled]="isProductSold(activeChat)"
                  [placeholder]="isProductSold(activeChat) ? 'El chat está cerrado' : 'Escribe un mensaje...'" 
                  class="flex-1 border-0 shadow-sm rounded-full px-5 py-3 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-500 text-[15px]">
+          
+          <button type="button" 
+                  (click)="openMeetupModal()"
+                  [disabled]="isProductSold(activeChat)"
+                  title="Proponer Punto de Encuentro"
+                  class="bg-blue-100 hover:bg-blue-200 disabled:opacity-50 text-blue-600 rounded-full p-2 w-11 h-11 flex items-center justify-center transition shadow-sm">
+            <span class="material-icons text-[20px]">location_on</span>
+          </button>
+          
           <button type="submit" 
                   [disabled]="!newMessageText.trim() || isProductSold(activeChat)"
                   class="bg-[#00a884] hover:bg-[#008f6f] disabled:opacity-50 text-white rounded-full p-2 w-11 h-11 flex items-center justify-center transition shadow-sm">
@@ -132,5 +185,43 @@
         <p class="text-sm">Selecciona una conversación para empezar a chatear.</p>
       </div>
     </ng-template>
+  </div>
+</div>
+
+<!-- Meetup Modal -->
+<div *ngIf="showMeetupModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-blue-50">
+      <h3 class="font-bold text-blue-900 flex items-center gap-2">
+        <span class="material-icons">event</span> Proponer Encuentro
+      </h3>
+      <button (click)="closeMeetupModal()" class="text-blue-400 hover:text-blue-600">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Lugar (ej. Biblioteca, Cafetería)</label>
+        <input type="text" [(ngModel)]="meetupLocation" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Lugar exacto en el campus">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+          <input type="date" [(ngModel)]="meetupDate" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+          <input type="time" [(ngModel)]="meetupTime" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        </div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded-lg flex gap-2 mt-4 text-xs text-gray-600">
+        <span class="material-icons text-gray-400 text-[16px]">info</span>
+        <p>Se enviará una tarjeta interactiva para que la otra persona acepte o rechace la propuesta.</p>
+      </div>
+    </div>
+    <div class="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+      <button (click)="closeMeetupModal()" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors">Cancelar</button>
+      <button (click)="sendMeetupProposal()" [disabled]="!meetupLocation || !meetupDate || !meetupTime" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-sm">Enviar Propuesta</button>
+    </div>
   </div>
 </div>

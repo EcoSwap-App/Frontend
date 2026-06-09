@@ -91,6 +91,10 @@ export class ApiService {
     return this.http.post<Message>(`${this.apiUrl}/messages`, message);
   }
 
+  updateMessage(id: number | string, message: Partial<Message>): Observable<Message> {
+    return this.http.patch<Message>(`${this.apiUrl}/messages/${id}`, message);
+  }
+
   getNotifications(userId: number | string): Observable<Notification[]> {
     return this.http.get<Notification[]>(`${this.apiUrl}/notifications?userId=${userId}&_sort=-createdAt`);
   }

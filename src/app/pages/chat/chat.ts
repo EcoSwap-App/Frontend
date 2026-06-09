@@ -21,6 +21,12 @@ export class ChatComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   newMessageText = '';
   
+  // Meetup modal state
+  showMeetupModal = false;
+  meetupLocation = '';
+  meetupDate = '';
+  meetupTime = '';
+  
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   // Maps to store extra info for UI
@@ -130,6 +136,45 @@ export class ChatComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  openMeetupModal() {
+    this.showMeetupModal = true;
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    this.meetupDate = tomorrow.toISOString().split('T')[0];
+    this.meetupTime = '12:00';
+    this.meetupLocation = 'Campus UPC';
+  }
+
+  closeMeetupModal() {
+    this.showMeetupModal = false;
+  }
+
+  sendMeetupProposal() {
+    if (!this.activeChat || !this.currentUser || !this.meetupLocation || !this.meetupDate || !this.meetupTime) return;
+    
+    const meetupData = {
+      location: this.meetupLocation,
+      date: this.meetupDate,
+      time: this.meetupTime,
+      status: 'pending'
+    };
+    
+    const text = `Propuesta de encuentro: ${this.meetupLocation} el ${this.meetupDate} a las ${this.meetupTime}`;
+    
+    this.chatService.sendMessage(this.activeChat.id, this.currentUser.id, text, 'meetup', meetupData)
+      .subscribe(() => {
+        this.closeMeetupModal();
+      });
+  }
+
+  respondToMeetup(msg: Message, status: 'accepted' | 'declined') {
+    if (!msg.id || !msg.meetup || !this.activeChat || !this.currentUser) return;
+    
+    const updatedMeetup = { ...msg.meetup, status };
+    this.chatService.updateMessage(msg.id, { meetup: updatedMeetup }).subscribe();
   }
 
   getOtherUser(chat: Chat): User | null {

@@ -60,6 +60,13 @@ export interface Message {
   chatId: number | string;
   senderId: number | string;
   text: string;
+  type?: 'text' | 'meetup';
+  meetup?: {
+    location: string;
+    date: string;
+    time: string;
+    status: 'pending' | 'accepted' | 'declined';
+  };
   createdAt: string;
 }
 

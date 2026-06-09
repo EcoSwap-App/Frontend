@@ -49,7 +49,9 @@ export class ChatService implements OnDestroy {
       const activeChatId = this.activeChatIdSubject.value;
       if (activeChatId) {
         this.apiService.getMessages(activeChatId).subscribe(messages => {
-          if (messages.length !== this.messagesSubject.value.length) {
+          const currentMessages = this.messagesSubject.value;
+          // Compare strings to detect deep changes like status updates on meetup cards
+          if (JSON.stringify(messages) !== JSON.stringify(currentMessages)) {
             this.messagesSubject.next(messages);
           }
         });
@@ -86,8 +88,11 @@ export class ChatService implements OnDestroy {
     }
   }
 
-  sendMessage(chatId: number | string, senderId: number | string, text: string) {
-    const newMessage = { chatId, senderId, text, createdAt: new Date().toISOString() };
+  sendMessage(chatId: number | string, senderId: number | string, text: string, type: 'text' | 'meetup' = 'text', meetup?: any) {
+    const newMessage: any = { chatId, senderId, text, type, createdAt: new Date().toISOString() };
+    if (meetup) {
+      newMessage.meetup = meetup;
+    }
     
     // Also patch the chat to update its updatedAt timestamp so it jumps to the top
     this.apiService.updateChat(chatId, { updatedAt: new Date().toISOString() }).subscribe();
@@ -97,6 +102,20 @@ export class ChatService implements OnDestroy {
         const currentMessages = this.messagesSubject.value;
         this.messagesSubject.next([...currentMessages, savedMessage]);
         return savedMessage;
+      })
+    );
+  }
+
+  updateMessage(messageId: number | string, data: Partial<Message>) {
+    return this.apiService.updateMessage(messageId, data).pipe(
+      map(updatedMessage => {
+        const currentMessages = this.messagesSubject.value;
+        const index = currentMessages.findIndex(m => m.id === messageId);
+        if (index !== -1) {
+          currentMessages[index] = { ...currentMessages[index], ...updatedMessage };
+          this.messagesSubject.next([...currentMessages]);
+        }
+        return updatedMessage;
       })
     );
   }
