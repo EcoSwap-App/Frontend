@@ -157,8 +157,9 @@
       "available": true,
       "createdAt": "2026-04-05",
       "images": [
-        "book1.jpg",
-        "book2.jpg"
+        "https://picsum.photos/seed/book1/500",
+        "https://picsum.photos/seed/book2/500",
+        "https://picsum.photos/seed/book3/500"
       ]
     },
     {
@@ -172,8 +173,9 @@
       "available": true,
       "createdAt": "2026-04-06",
       "images": [
-        "calc1.jpg",
-        "calc2.jpg"
+        "https://picsum.photos/seed/calc1/500",
+        "https://picsum.photos/seed/calc2/500",
+        "https://picsum.photos/seed/calc3/500"
       ]
     },
     {
@@ -329,6 +331,16 @@
       "createdAt": "2026-06-09T14:59:38.228Z",
       "updatedAt": "2026-06-09T14:59:41.155Z",
       "id": 1006
+    },
+    {
+      "productId": 1001,
+      "participants": [
+        "1",
+        "1000"
+      ],
+      "createdAt": "2026-06-09T21:36:40.200Z",
+      "updatedAt": "2026-06-09T21:36:40.201Z",
+      "id": 1007
     }
   ],
   "messages": [
