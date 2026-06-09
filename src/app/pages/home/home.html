@@ -1,118 +1,132 @@
-<div class="bg-gray-50 min-h-screen pb-12 font-sans">
-  <!-- Hero Section -->
-  <div class="relative bg-gradient-to-br from-green-500 via-teal-400 to-blue-600 overflow-hidden shadow-inner">
-    <!-- Decorative background elements -->
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none opacity-20">
-      <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-white blur-3xl"></div>
-      <div class="absolute top-1/2 right-0 w-[30rem] h-[30rem] rounded-full bg-blue-300 blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-    </div>
-    
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 relative z-10 flex flex-col md:flex-row items-center">
-      <div class="w-full md:w-3/5 text-white pr-8">
-        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 drop-shadow-md leading-tight">
-          COMPRA Y VENDE<br/>
-          <span class="text-green-100">MATERIALES ACADÉMICOS</span><br/>
-          CON MÁS SEGURIDAD
-        </h1>
-        <p class="text-lg md:text-xl mb-10 max-w-xl text-blue-50 font-medium drop-shadow">
-          Ahorra entre 50% y 70% dándole una segunda vida a tus libros y equipos. Una red exclusiva para tu comunidad universitaria.
-        </p>
-        <div class="flex gap-4">
-          <a routerLink="/add-product" class="inline-flex items-center justify-center bg-white text-green-600 px-8 py-3.5 rounded-full font-bold shadow-lg hover:bg-green-50 hover:scale-105 hover:shadow-xl transition-all duration-300">
-            Vender ahora
-          </a>
-          <a routerLink="/catalog" class="inline-flex items-center justify-center bg-white/20 backdrop-blur-md border border-white/40 text-white px-8 py-3.5 rounded-full font-bold shadow-lg hover:bg-white/30 hover:scale-105 transition-all duration-300">
-            Explorar
-          </a>
+<div class="bg-gray-100 min-h-screen pt-6 pb-12 font-sans">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      
+      <!-- Left Sidebar -->
+      <div class="hidden lg:block lg:col-span-1 space-y-6">
+        <!-- User Profile Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" *ngIf="currentUser">
+          <div class="h-20 bg-gradient-to-r from-green-400 to-blue-500"></div>
+          <div class="px-4 pb-4 relative">
+            <img *ngIf="currentUser.avatar" [src]="currentUser.avatar" class="w-16 h-16 rounded-full border-4 border-white absolute -top-8 bg-white object-cover">
+            <div *ngIf="!currentUser.avatar" class="w-16 h-16 rounded-full border-4 border-white absolute -top-8 bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-2xl">
+              {{ currentUser.name.charAt(0) }}
+            </div>
+            <div class="pt-10">
+              <h3 class="font-bold text-gray-900 text-lg">{{ currentUser.name }}</h3>
+              <p class="text-sm text-gray-500">{{ currentUser.email }}</p>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="w-full md:w-2/5 mt-12 md:mt-0 flex justify-center md:justify-end">
-        <!-- Circular Image Placeholder with Glass Ring -->
-        <div class="relative group">
-          <div class="absolute inset-0 bg-white/30 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-          <div class="relative w-72 h-72 md:w-96 md:h-96 rounded-full overflow-hidden border-[6px] border-white/80 shadow-2xl transform group-hover:-translate-y-2 transition-transform duration-500">
-            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800" alt="Estudiantes" class="w-full h-full object-cover">
+
+        <!-- Navigation Menu -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
+          <ul class="space-y-1">
+            <li>
+              <a routerLink="/catalog" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors font-medium">
+                <span class="material-icons text-blue-500">storefront</span>
+                Explorar Catálogo
+              </a>
+            </li>
+            <li>
+              <a routerLink="/my-products" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors font-medium">
+                <span class="material-icons text-green-500">inventory_2</span>
+                Mis Anuncios
+              </a>
+            </li>
+            <li>
+              <a routerLink="/chat" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors font-medium">
+                <span class="material-icons text-purple-500">forum</span>
+                Mensajes
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Categories -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <h3 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <span class="material-icons text-gray-400 text-sm">category</span>
+            Categorías
+          </h3>
+          <div class="space-y-2">
+            <a *ngFor="let cat of categories" routerLink="/catalog" [queryParams]="{category: cat.id}" class="flex items-center justify-between group cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition-colors">
+              <div class="flex items-center gap-3">
+                <span class="material-icons text-gray-400 group-hover:text-green-500 transition-colors text-sm">folder</span>
+                <span class="text-gray-700 text-sm font-medium group-hover:text-gray-900">{{ cat.name }}</span>
+              </div>
+            </a>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Info Section -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-2rem] relative z-20">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition-transform duration-300 flex items-start gap-4">
-        <div class="bg-green-100 p-3 rounded-full text-green-600">
-          <span class="material-icons">security</span>
+      <!-- Center Feed -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Sell Action Block -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold" *ngIf="currentUser && !currentUser.avatar">
+              {{ currentUser.name.charAt(0) }}
+            </div>
+            <img *ngIf="currentUser && currentUser.avatar" [src]="currentUser.avatar" class="w-10 h-10 rounded-full object-cover">
+            
+            <a routerLink="/add-product" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 px-4 py-2.5 rounded-full text-sm text-left transition-colors cursor-pointer">
+              ¿Qué material académico quieres vender hoy?
+            </a>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-100 flex justify-around">
+            <a routerLink="/add-product" class="flex items-center gap-2 text-gray-600 hover:text-green-600 font-medium text-sm transition-colors cursor-pointer p-2 rounded-lg hover:bg-green-50">
+              <span class="material-icons text-green-500">add_photo_alternate</span>
+              Subir Foto
+            </a>
+            <a routerLink="/add-product" class="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium text-sm transition-colors cursor-pointer p-2 rounded-lg hover:bg-blue-50">
+              <span class="material-icons text-blue-500">description</span>
+              Añadir Detalles
+            </a>
+          </div>
         </div>
-        <div>
-          <h3 class="font-bold text-gray-900 text-lg">Entorno Seguro</h3>
-          <p class="text-gray-600 mt-1 text-sm leading-relaxed">Herramientas integradas para reportar usuarios o mensajes sospechosos, asegurando un espacio libre de estafas.</p>
-        </div>
-      </div>
-      <div class="bg-white/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-gray-100 hover:-translate-y-1 transition-transform duration-300 flex items-start gap-4">
-        <div class="bg-blue-100 p-3 rounded-full text-blue-600">
-          <span class="material-icons">forum</span>
-        </div>
-        <div>
-          <h3 class="font-bold text-gray-900 text-lg">Chats Supervisados</h3>
-          <p class="text-gray-600 mt-1 text-sm leading-relaxed">Comunícate directamente con otros estudiantes dentro de la plataforma, sin compartir datos personales externos.</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Categories -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
-    <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900 mb-8 tracking-tight flex items-center gap-2">
-      <span class="material-icons text-green-500">category</span>
-      Categorías Destacadas
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div routerLink="/catalog" class="relative h-48 rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-xl transition-all duration-300">
-        <img src="https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=400" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-        <div class="absolute bottom-5 left-1/2 -translate-x-1/2 w-full text-center">
-          <span class="text-white font-bold text-lg tracking-wider drop-shadow-md">LIBROS</span>
-        </div>
-      </div>
-      <div routerLink="/catalog" class="relative h-48 rounded-2xl overflow-hidden group cursor-pointer md:col-span-2 shadow-md hover:shadow-xl transition-all duration-300">
-        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-        <div class="absolute bottom-5 left-1/2 -translate-x-1/2 w-full text-center">
-          <span class="text-white font-bold text-lg tracking-wider drop-shadow-md">SOFTWARE & ELECTRÓNICA</span>
-        </div>
-      </div>
-      <div routerLink="/catalog" class="relative h-48 rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-xl transition-all duration-300">
-        <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=400" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-        <div class="absolute bottom-5 left-1/2 -translate-x-1/2 w-full text-center">
-          <span class="text-white font-bold text-lg tracking-wider drop-shadow-md">ÚTILES</span>
-        </div>
-      </div>
-    </div>
-  </div>
+        <!-- Feed Content -->
+        <div class="space-y-4">
+          <h3 class="font-bold text-gray-900 px-1 text-lg flex items-center gap-2">
+            <span class="material-icons text-blue-500">dynamic_feed</span>
+            Publicaciones Recientes
+          </h3>
+          
+          <div *ngIf="products.length === 0" class="py-12 text-center bg-white rounded-xl border border-dashed border-gray-300">
+            <span class="material-icons text-gray-300 text-5xl mb-3">inventory_2</span>
+            <p class="text-gray-500 font-medium">No hay productos nuevos por el momento.</p>
+          </div>
 
-  <!-- Popular Products -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-8">
-    <div class="flex justify-between items-end mb-8">
-      <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-        <span class="material-icons text-blue-500">local_fire_department</span>
-        Más Populares
-      </h2>
-      <a routerLink="/catalog" class="text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors flex items-center">
-        Ver todos <span class="material-icons text-sm ml-1">arrow_forward</span>
-      </a>
-    </div>
-    
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-      <app-product-card *ngFor="let product of products" [product]="product" class="transform hover:-translate-y-2 transition-transform duration-300"></app-product-card>
-      
-      <div *ngIf="products.length === 0" class="col-span-full py-12 text-center bg-white rounded-2xl border border-dashed border-gray-300">
-        <span class="material-icons text-gray-300 text-5xl mb-3">inventory_2</span>
-        <p class="text-gray-500 font-medium">No hay productos disponibles por el momento.</p>
-        <p class="text-sm text-gray-400 mt-1">¡Sé el primero en publicar un anuncio!</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <app-product-card *ngFor="let product of products" [product]="product"></app-product-card>
+          </div>
+        </div>
       </div>
+
+      <!-- Right Sidebar -->
+      <div class="hidden lg:block lg:col-span-1 space-y-6">
+        <!-- Trending -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-24">
+          <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="material-icons text-orange-500">local_fire_department</span>
+            Más Populares
+          </h3>
+          <div class="space-y-4">
+            <div *ngFor="let product of trendingProducts" routerLink="/product/{{product.id}}" class="flex items-start gap-3 group cursor-pointer">
+              <img [src]="product.images && product.images.length > 0 ? product.images[0] : 'assets/placeholder.png'" [alt]="product.title" class="w-16 h-16 rounded-lg object-cover border border-gray-100 group-hover:opacity-80 transition-opacity">
+              <div>
+                <h4 class="text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">{{ product.title }}</h4>
+                <p class="text-green-600 font-bold text-sm mt-1">S/ {{ product.price | number:'1.2-2' }}</p>
+              </div>
+            </div>
+          </div>
+          <a routerLink="/catalog" class="block w-full text-center text-sm text-blue-600 font-medium hover:text-blue-700 mt-4 pt-3 border-t border-gray-100 transition-colors">
+            Ver todo el catálogo
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

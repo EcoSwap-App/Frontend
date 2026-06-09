@@ -3,14 +3,14 @@
   <div class="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 bg-white">
     <div class="w-full max-w-md">
       <!-- Logo -->
-      <div class="flex justify-center mb-8">
+      <div class="flex justify-center mb-6">
         <div class="flex flex-col items-center">
-          <img class="h-16 w-auto" src="assets/logo.png" alt="EcoSwap" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTBiOTgxIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIyIDEybC0xMCAxMEwyIDEyVjRoMjB6Ii8+PC9zdmc+'" />
-          <span class="text-2xl font-bold text-green-600 mt-2">EcoSwap</span>
+          <img class="h-36 w-auto drop-shadow-md" src="assets/logo.png?v=3" alt="EcoSwap Logo" />
+          <span class="text-4xl font-semibold mt-3 bg-gradient-to-r from-green-400 to-cyan-500 bg-clip-text text-transparent tracking-tight">EcoSwap</span>
         </div>
       </div>
 
-      <h2 class="text-center text-4xl font-extrabold text-gray-900 mb-8">
+      <h2 class="text-center text-3xl font-extrabold text-gray-900 mb-6">
         Iniciar Sesión
       </h2>
 
@@ -18,16 +18,16 @@
         {{ error }}
       </div>
 
-      <form class="space-y-6" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <form class="space-y-5" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <div>
-          <input type="email" formControlName="email" required class="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" placeholder="Correo Universitario">
+          <input type="email" formControlName="email" required class="appearance-none rounded-xl relative block w-full px-4 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" placeholder="Correo Universitario">
         </div>
         <div>
-          <input type="password" formControlName="password" required class="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" placeholder="Contraseña">
+          <input type="password" formControlName="password" required class="appearance-none rounded-xl relative block w-full px-4 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" placeholder="Contraseña">
         </div>
 
         <div>
-          <button type="submit" [disabled]="!loginForm.valid" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
+          <button type="submit" [disabled]="!loginForm.valid" class="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
             Iniciar Sesión
           </button>
         </div>
@@ -39,7 +39,7 @@
         </div>
       </form>
 
-      <div class="mt-10 text-center">
+      <div class="mt-8 text-center">
         <p class="text-sm text-gray-600">
           ¿No tienes cuenta?
           <a routerLink="/register" class="font-medium text-green-500 hover:text-green-600">
