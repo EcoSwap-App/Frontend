@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth';
+import { SupabaseService } from '../../services/supabase.service';
+import { from } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +20,7 @@ export class Login {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private supabaseService: SupabaseService,
     private router: Router
   ) {
     this.loginForm = this.fb.group({
@@ -28,11 +31,19 @@ export class Login {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      this.authService.login(this.loginForm.value.email).subscribe(users => {
-        if (users && users.length > 0) {
-          this.router.navigate(['/home']);
-        } else {
-          this.error = 'Credenciales inválidas o usuario no encontrado.';
+      this.authService.login(
+        this.loginForm.value.email,
+        this.loginForm.value.password
+      ).subscribe({
+        next: (user) => {
+          if (user) {
+            this.router.navigate(['/home']);
+          } else {
+            this.error = 'Credenciales inválidas o usuario no encontrado.';
+          }
+        },
+        error: (err) => {
+          this.error = 'Credenciales inválidas o error de conexión: ' + (err.message || err);
         }
       });
     }
@@ -42,26 +53,19 @@ export class Login {
     this.isMicrosoftLoading = true;
     this.error = '';
     
-    // Simulate OAuth redirect and processing
-    setTimeout(() => {
-      // In this mock MVP, if the user typed an email, we try to log them in with that email.
-      // Otherwise, we fallback to our default test user Juan Perez.
-      const emailToUse = this.loginForm.value.email || 'juan@upc.edu.pe';
-      
-      this.authService.login(emailToUse).subscribe({
-        next: (users) => {
+    from(this.supabaseService.client.auth.signInWithOAuth({
+      provider: 'azure',
+    })).subscribe({
+      next: (res) => {
+        if (res.error) {
+          this.error = res.error.message;
           this.isMicrosoftLoading = false;
-          if (users && users.length > 0) {
-            this.router.navigate(['/home']);
-          } else {
-            this.error = 'Error al conectar con Microsoft. El usuario no existe en la base de datos simulada.';
-          }
-        },
-        error: () => {
-          this.isMicrosoftLoading = false;
-          this.error = 'Error de conexión con el servidor.';
         }
-      });
-    }, 1500);
+      },
+      error: (err) => {
+        this.error = 'Error de conexión con Microsoft.';
+        this.isMicrosoftLoading = false;
+      }
+    });
   }
 }
