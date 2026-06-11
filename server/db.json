@@ -234,16 +234,17 @@
     {
       "id": 7,
       "title": "Physics II Text",
-      "description": "Some wear on cover",
+      "description": "Some wear on cover 2",
       "price": 40,
-      "status": "used",
-      "categoryId": 1,
+      "status": "new",
+      "categoryId": 4,
       "userId": 1,
       "available": true,
       "createdAt": "2026-04-15",
       "images": [
         "https://imgur.com/xa3eV1f.jpeg"
-      ]
+      ],
+      "type": "sale"
     },
     {
       "title": "Vendo libros",
