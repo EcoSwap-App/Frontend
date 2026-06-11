@@ -3,9 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api';
 import { AuthService } from '../../services/auth';
+import {Tripo3dService} from '../../services/tripo3d';
 import { Product, Chat, User } from '../../models';
 import { ProductCard } from '../../components/product-card/product-card';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+
+type View3DState = 'idle' | 'generating' | 'loading' | 'ready' | 'error';
 
 @Component({
   selector: 'app-product-details',
@@ -13,7 +18,7 @@ import * as THREE from 'three';
   imports: [CommonModule, ProductCard, RouterLink],
   templateUrl: './product-details.html',
 })
-export class ProductDetails implements OnInit, OnDestroy, AfterViewInit {
+export class ProductDetails implements OnInit, OnDestroy {
   @ViewChild('threeCanvas') threeCanvas!: ElementRef<HTMLCanvasElement>;
 
   product: Product | null = null;
@@ -25,19 +30,23 @@ export class ProductDetails implements OnInit, OnDestroy, AfterViewInit {
 
   // 3D viewer state
   is3DMode = false;
+  view3DState: View3DState = 'idle';
+  generationProgress = 0;
+  errorMessage = '';
+
   private renderer!: THREE.WebGLRenderer;
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
-  private cube!: THREE.Mesh;
+  private controls!: OrbitControls;
   private animationId!: number;
-  private isDragging = false;
-  private previousMousePosition = { x: 0, y: 0 };
+  private cachedModelUrl: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private apiService: ApiService,
     private authService: AuthService,
+    private tripo3d: Tripo3dService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -51,8 +60,6 @@ export class ProductDetails implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  ngAfterViewInit() {}
-
   ngOnDestroy() {
     this.destroyThreeJS();
   }
@@ -60,6 +67,7 @@ export class ProductDetails implements OnInit, OnDestroy, AfterViewInit {
   loadProductDetails(id: number) {
     this.apiService.getProductById(id).subscribe((data) => {
       this.product = data;
+      this.cachedModelUrl = data.model3d || null;
       if (data.images && data.images.length > 0) {
         this.selectedImage = data.images[0].startsWith('data:image')
           ? data.images[0]
@@ -103,136 +111,182 @@ export class ProductDetails implements OnInit, OnDestroy, AfterViewInit {
   toggle3DView() {
     this.is3DMode = !this.is3DMode;
     if (this.is3DMode) {
-      setTimeout(() => this.initThreeJS(), 100);
+      if (this.cachedModelUrl) {
+        // Ya fue generado antes, solo cargar
+        setTimeout(() => this.initThreeJS(this.cachedModelUrl!), 100);
+      } else {
+        this.start3DGeneration();
+      }
     } else {
       this.destroyThreeJS();
+      this.view3DState = 'idle';
     }
   }
 
-  private getImageUrls(): string[] {
-    const fallback = 'https://placehold.co/500x500/e2e8f0/64748b?text=Sin+imagen';
+  private getFirstImageUrl(): string | null {
+    if (!this.product?.images || this.product.images.length === 0) return null;
+    const img = this.product.images[0];
+    if (img.startsWith('http')) return img;
+    if (img.startsWith('data:')) return null; // base64 necesita otro flujo
+    return null;
+  }
 
-    if (!this.product?.images || this.product.images.length === 0) {
-      return Array(6).fill(fallback);
+  private start3DGeneration() {
+    const imageUrl = this.getFirstImageUrl();
+
+    if (!imageUrl) {
+      this.view3DState = 'error';
+      this.errorMessage =
+        'Este producto no tiene imágenes con URL válida para generar el modelo 3D.';
+      this.cdr.detectChanges();
+      return;
     }
 
-    const imgs = this.product.images.map((img) => {
-      if (img.startsWith('http')) return img;
-      if (img.startsWith('data:')) return img;
-      return fallback; // rutas locales → fallback
+    this.view3DState = 'generating';
+    this.generationProgress = 0;
+    this.cdr.detectChanges();
+
+    // 1. Crear tarea en Tripo3D
+    this.tripo3d.generateFromImageUrl(imageUrl).subscribe({
+      next: (taskId) => {
+        // 2. Polling hasta que termine
+        this.tripo3d.pollUntilDone(taskId).subscribe({
+          next: (task) => {
+            this.generationProgress = task.progress;
+            this.cdr.detectChanges();
+
+            if (task.status === 'success' && task.model_url) {
+              this.cachedModelUrl = task.model_url;
+              // Guardar en db.json
+              this.tripo3d.saveModelUrl(Number(this.product!.id), task.model_url).subscribe();
+
+              this.view3DState = 'loading';
+              this.cdr.detectChanges();
+              setTimeout(() => this.initThreeJS(task.model_url!), 100);
+            } else if (task.status === 'failed') {
+              this.view3DState = 'error';
+              this.errorMessage = 'La generación del modelo 3D falló. Intenta de nuevo.';
+              this.cdr.detectChanges();
+            }
+          },
+          error: () => {
+            this.view3DState = 'error';
+            this.errorMessage = 'Error al consultar el estado del modelo.';
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: (err) => {
+        this.view3DState = 'error';
+        this.errorMessage =
+          'Error al iniciar la generación: ' + (err?.error?.message || 'verifica tu API key.');
+        this.cdr.detectChanges();
+      },
     });
-
-    //fill 6 faces repeating if needed
-    const faces: string[] = [];
-    for (let i = 0; i < 6; i++) {
-      faces.push(imgs[i % imgs.length]);
-    }
-    return faces;
   }
 
-  private initThreeJS() {
-    const canvas = this.threeCanvas.nativeElement;
+  private initThreeJS(modelUrl: string) {
+    const canvas = this.threeCanvas?.nativeElement;
     if (!canvas) return;
 
     const width = canvas.clientWidth || 400;
     const height = canvas.clientHeight || 400;
 
+    // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xf8fafc);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    this.camera.position.set(0, 0, 3);
+    this.camera.position.set(0, 1, 3);
 
+    // Renderer
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.shadowMap.enabled = true;
 
+    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     this.scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(5, 5, 5);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(5, 10, 5);
+    dirLight.castShadow = true;
     this.scene.add(dirLight);
 
-    const loader = new THREE.TextureLoader();
-    loader.crossOrigin = 'anonymous';
-    const imageUrls = this.getImageUrls();
+    // OrbitControls — el usuario puede rotar, zoom, etc.
+    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.autoRotate = true;
+    this.controls.autoRotateSpeed = 2;
 
-    const materials = imageUrls.map((url) => {
-      const texture = loader.load(url, () => {
-        if (this.renderer) this.renderer.render(this.scene, this.camera);
-      });
-      texture.colorSpace = THREE.SRGBColorSpace;
-      return new THREE.MeshStandardMaterial({ map: texture });
-    });
+    // Cargar el .glb
+    const loader = new GLTFLoader();
+    loader.load(
+      modelUrl,
+      (gltf) => {
+        const model = gltf.scene;
 
-    const geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
-    this.cube = new THREE.Mesh(geometry, materials);
-    this.scene.add(this.cube);
+        // Centrar y escalar el modelo automáticamente
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 2 / maxDim;
+        model.scale.setScalar(scale);
+        model.position.sub(center.multiplyScalar(scale));
 
-    canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
-    canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
-    canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
-    canvas.addEventListener('mouseleave', this.onMouseUp.bind(this));
-
-    canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: true });
-    canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: true });
-    canvas.addEventListener('touchend', this.onMouseUp.bind(this));
-
-    this.animate();
+        this.scene.add(model);
+        this.view3DState = 'ready';
+        this.cdr.detectChanges();
+        this.animate();
+      },
+      (xhr) => {
+        // progreso de descarga del .glb
+        if (xhr.total > 0) {
+          const pct = Math.round((xhr.loaded / xhr.total) * 100);
+          this.generationProgress = pct;
+          this.cdr.detectChanges();
+        }
+      },
+      (error) => {
+        console.error('Error cargando .glb:', error);
+        this.view3DState = 'error';
+        this.errorMessage = 'Error al cargar el modelo 3D.';
+        this.cdr.detectChanges();
+      },
+    );
   }
 
   private animate() {
     this.animationId = requestAnimationFrame(() => this.animate());
-    if (!this.isDragging && this.cube) {
-      this.cube.rotation.y += 0.005;
-      this.cube.rotation.x += 0.002;
-    }
+    this.controls?.update();
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
   }
 
-  private onMouseDown(e: MouseEvent) {
-    this.isDragging = true;
-    this.previousMousePosition = { x: e.clientX, y: e.clientY };
-  }
-
-  private onMouseMove(e: MouseEvent) {
-    if (!this.isDragging || !this.cube) return;
-    const deltaX = e.clientX - this.previousMousePosition.x;
-    const deltaY = e.clientY - this.previousMousePosition.y;
-    this.cube.rotation.y += deltaX * 0.01;
-    this.cube.rotation.x += deltaY * 0.01;
-    this.previousMousePosition = { x: e.clientX, y: e.clientY };
-  }
-
-  private onMouseUp() {
-    this.isDragging = false;
-  }
-
-  private onTouchStart(e: TouchEvent) {
-    this.isDragging = true;
-    this.previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }
-
-  private onTouchMove(e: TouchEvent) {
-    if (!this.isDragging || !this.cube) return;
-    const deltaX = e.touches[0].clientX - this.previousMousePosition.x;
-    const deltaY = e.touches[0].clientY - this.previousMousePosition.y;
-    this.cube.rotation.y += deltaX * 0.01;
-    this.cube.rotation.x += deltaY * 0.01;
-    this.previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }
-
   private destroyThreeJS() {
-    if (this.animationId)  {
-      cancelAnimationFrame(this.animationId);
-    }
-    if(this.renderer){
-      this.renderer.dispose();
-    }
-    this.is3DMode = false;
+    if (this.animationId) cancelAnimationFrame(this.animationId);
+    if (this.controls) this.controls.dispose();
+    if (this.renderer) this.renderer.dispose();
+  }
+
+  get isGenerating(): boolean {
+    return this.view3DState === 'generating';
+  }
+
+  get isLoading(): boolean {
+    return this.view3DState === 'loading';
+  }
+
+  get hasError(): boolean {
+    return this.view3DState === 'error';
+  }
+
+  get isReady(): boolean {
+    return this.view3DState === 'ready';
   }
 
   //--- methods-----

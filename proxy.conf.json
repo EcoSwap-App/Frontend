@@ -1,0 +1,10 @@
+{
+  "/tripo-api": {
+    "target": "https://api.tripo3d.ai",
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/tripo-api": ""
+    },
+    "secure": true
+  }
+}

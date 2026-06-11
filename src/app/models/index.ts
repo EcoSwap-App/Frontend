@@ -44,7 +44,7 @@ export interface Product {
   type?: 'sale' | 'wanted';
   createdAt: string;
   images: string[];
-  model3d?: Model3D;
+  model3d?: string;
 }
 
 export interface Chat {

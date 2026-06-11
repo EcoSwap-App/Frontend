@@ -1,37 +1,94 @@
 <div class="bg-transparent min-h-[calc(100vh-4rem)] pb-12 pt-8" *ngIf="product">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <!-- Top Details Section -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-12">
       <div class="flex flex-col md:flex-row">
 
         <!-- Left: Image Gallery -->
         <div class="md:w-1/2 p-6 flex flex-col items-center">
 
-          <!-- Main Image -->
-          <div *ngIf="product.type !== 'wanted' || (product.images && product.images.length > 0)" class="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4 border border-gray-200">
+          <!-- 2D Main Image -->
+          <div
+            *ngIf="!is3DMode && (product.type !== 'wanted' || (product.images && product.images.length > 0))"
+            class="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4 border border-gray-200">
             <img [src]="selectedImage" [alt]="product.title" class="w-full h-full object-cover">
           </div>
 
-          <!-- 3D Canvas -->
+          <!-- Wanted placeholder -->
           <div
-            *ngIf="is3DMode"
-            class="w-full aspect-square rounded-xl overflow-hidden mb-4 border border-blue-200 bg-slate-50 relative">
-            <canvas
-              #threeCanvas
-              class="w-full h-full cursor-grab active:cursor-grabbing"
-              style="display: block;">
-            </canvas>
-            <p class="absolute bottom-2 left-0 right-0 text-center text-xs text-gray-400 pointer-events-none select-none">
-              Arrastra para rotar
+            *ngIf="!is3DMode && product.type === 'wanted' && (!product.images || product.images.length === 0)"
+            class="w-full aspect-square rounded-xl overflow-hidden bg-purple-50 mb-4 border border-purple-100 flex flex-col items-center justify-center text-purple-300">
+            <span class="material-icons text-7xl mb-4">person_search</span>
+            <span class="font-bold text-lg text-purple-400">Buscando Material</span>
+            <p class="text-sm text-purple-300 text-center px-8 mt-2">
+              Este estudiante está buscando comprar este artículo, no venderlo.
             </p>
           </div>
 
+          <!-- 3D Viewer -->
+          <div
+            *ngIf="is3DMode"
+            class="w-full aspect-square rounded-xl overflow-hidden mb-4 border border-blue-200 bg-slate-50 relative flex items-center justify-center">
 
-          <div *ngIf="product.type === 'wanted' && (!product.images || product.images.length === 0)" class="w-full aspect-square rounded-xl overflow-hidden bg-purple-50 mb-4 border border-purple-100 flex flex-col items-center justify-center text-purple-300">
-            <span class="material-icons text-7xl mb-4">person_search</span>
-            <span class="font-bold text-lg text-purple-400">Buscando Material</span>
-            <p class="text-sm text-purple-300 text-center px-8 mt-2">Este estudiante está buscando comprar este artículo, no venderlo.</p>
+            <!-- Canvas (siempre presente cuando is3DMode, oculto hasta que esté ready) -->
+            <canvas
+              #threeCanvas
+              class="w-full h-full cursor-grab active:cursor-grabbing"
+              [class.hidden]="!isReady"
+              style="display: block;">
+            </canvas>
+
+            <!-- Estado: Generando -->
+            <div *ngIf="isGenerating" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 gap-4 p-6">
+              <div class="relative w-20 h-20">
+                <svg class="animate-spin w-20 h-20 text-blue-500" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+                  <path class="opacity-80" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                        d="M12 2a10 10 0 0 1 10 10"/>
+                </svg>
+                <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-blue-600">
+                  {{ generationProgress }}%
+                </span>
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-gray-700">Generando modelo 3D...</p>
+                <p class="text-sm text-gray-400 mt-1">La IA está procesando las imágenes</p>
+                <p class="text-xs text-gray-300 mt-1">Puede tardar 30-60 segundos</p>
+              </div>
+              <!-- Barra de progreso -->
+              <div class="w-full max-w-xs bg-gray-200 rounded-full h-2">
+                <div
+                  class="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                  [style.width.%]="generationProgress">
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado: Cargando .glb -->
+            <div *ngIf="isLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 gap-3">
+              <div class="animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                </svg>
+              </div>
+              <p class="text-sm font-medium text-gray-600">Cargando modelo...</p>
+            </div>
+
+            <!-- Estado: Error -->
+            <div *ngIf="hasError" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 gap-3 p-6">
+              <span class="material-icons text-red-400 text-5xl">error_outline</span>
+              <p class="text-sm font-bold text-red-500 text-center">{{ errorMessage }}</p>
+              <button
+                (click)="toggle3DView(); toggle3DView()"
+                class="mt-2 bg-red-50 border border-red-300 text-red-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-100">
+                Reintentar
+              </button>
+            </div>
+
+            <!-- Hint de controles (solo cuando está ready) -->
+            <p *ngIf="isReady" class="absolute bottom-2 left-0 right-0 text-center text-xs text-gray-400 pointer-events-none select-none">
+              Arrastra para rotar · Scroll para zoom
+            </p>
           </div>
 
           <!-- Thumbnails -->
@@ -39,21 +96,18 @@
             *ngIf="product.images && product.images.length > 0"
             class="flex gap-3 w-full overflow-x-auto pb-2 items-center">
 
-            <!-- Image thumbnails (only clickable in 2D mode) -->
             <ng-container *ngFor="let img of product.images">
               <button
-                (click)="!is3DMode && (selectedImage = img.startsWith('http') ? img : 'assets/' + img)"
+                (click)="!is3DMode && (selectedImage = img.startsWith('http') || img.startsWith('data:') ? img : 'assets/' + img)"
                 class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 focus:outline-none transition-all"
-                [class.border-blue-500]="!is3DMode && selectedImage === (img.startsWith('http') ? img : 'assets/' + img)"
-                [class.border-transparent]="is3DMode || selectedImage !== (img.startsWith('http') ? img : 'assets/' + img)"
+                [class.border-blue-500]="!is3DMode && selectedImage === (img.startsWith('http') || img.startsWith('data:') ? img : 'assets/' + img)"
+                [class.border-transparent]="is3DMode || selectedImage !== (img.startsWith('http') || img.startsWith('data:') ? img : 'assets/' + img)"
                 [class.opacity-40]="is3DMode">
-                <img
-                  [src]="img.startsWith('http') ? img : 'assets/' + img"
-                  class="w-full h-full object-cover">
+                <img [src]="img.startsWith('http') || img.startsWith('data:') ? img : 'assets/' + img" class="w-full h-full object-cover">
               </button>
             </ng-container>
 
-            <!-- 3D Toggle button -->
+            <!-- Botón Ver 3D -->
             <button
               *ngIf="product.type !== 'wanted'"
               (click)="toggle3DView()"
@@ -63,13 +117,13 @@
               [class.text-blue-600]="is3DMode"
               [class.border-gray-200]="!is3DMode"
               [class.bg-white]="!is3DMode"
-              [class.text-gray-500]="!is3DMode"
-              title="Ver en 3D">
+              [class.text-gray-500]="!is3DMode">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
               </svg>
               <span>{{ is3DMode ? 'Salir 3D' : 'Ver 3D' }}</span>
             </button>
+
           </div>
         </div>
 
@@ -78,7 +132,8 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <div class="flex gap-2">
-                <span *ngIf="product.type === 'wanted'" class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                <span *ngIf="product.type === 'wanted'"
+                      class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
                   <span class="material-icons text-[12px]">search</span> SE BUSCA
                 </span>
                 <span class="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
@@ -90,8 +145,11 @@
 
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{{ product.title }}</h1>
 
-            <!-- Seller Info -->
-            <div [routerLink]="['/user', seller.id]" class="flex items-center mb-6 bg-blue-50 hover:bg-blue-100 p-3 rounded-xl border border-blue-100 w-fit cursor-pointer transition-colors" *ngIf="seller" title="Ver perfil del estudiante">
+            <div
+              [routerLink]="['/user', seller.id]"
+              class="flex items-center mb-6 bg-blue-50 hover:bg-blue-100 p-3 rounded-xl border border-blue-100 w-fit cursor-pointer transition-colors"
+              *ngIf="seller"
+              title="Ver perfil del estudiante">
               <div class="h-12 w-12 rounded-full overflow-hidden mr-3 border-2 border-white shadow-sm flex items-center justify-center bg-blue-200 text-blue-700 font-bold text-lg">
                 <img *ngIf="seller.avatar" [src]="seller.avatar" class="w-full h-full object-cover">
                 <span *ngIf="!seller.avatar">{{ seller.name.charAt(0) }}</span>
@@ -100,14 +158,14 @@
                 <p class="text-sm font-bold text-gray-900">{{ seller.name }}</p>
                 <div class="flex text-yellow-500 text-xs items-center gap-1 font-bold">
                   <span>{{ seller.reputation }}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
                 </div>
               </div>
             </div>
 
-            <p class="text-gray-600 mb-8 leading-relaxed">
-              {{ product.description }}
-            </p>
+            <p class="text-gray-600 mb-8 leading-relaxed">{{ product.description }}</p>
           </div>
 
           <div>
@@ -116,28 +174,27 @@
             </div>
 
             <div class="space-y-3">
-              <!-- Sale Actions -->
               <ng-container *ngIf="product.type !== 'wanted'">
-                <button (click)="requestProduct()" class="w-full bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                <button (click)="requestProduct()"
+                        class="w-full bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
                   <span class="material-icons">shopping_cart</span>
                   Comprar Producto
                 </button>
-
-                <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()" class="w-full bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()"
+                        class="w-full bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 font-bold py-4 px-8 rounded-xl shadow-sm transition-transform hover:scale-105 flex justify-center items-center gap-2">
                   <span class="material-icons">chat</span>
                   Preguntar al Vendedor
                 </button>
               </ng-container>
-
-              <!-- Wanted Actions -->
               <ng-container *ngIf="product.type === 'wanted'">
-                <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
+                <button *ngIf="currentUser?.id !== product.userId" (click)="contactSeller()"
+                        class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105 flex justify-center items-center gap-2">
                   <span class="material-icons">waving_hand</span>
                   ¡Yo lo tengo! Ofrecer
                 </button>
               </ng-container>
-
             </div>
+
             <p class="text-center text-xs text-gray-500 mt-4">
               {{ product.type === 'wanted' ? 'Contacta al comprador para negociar la entrega' : 'La solicitud notificará al vendedor a través de EcoSwap' }}
             </p>
@@ -149,8 +206,6 @@
     <!-- Related Products -->
     <div class="mb-8" *ngIf="otherProducts.length > 0">
       <h2 class="text-2xl font-bold text-gray-900 mb-6">Otros productos disponibles</h2>
-
-      <!-- Horizontal Scroll / Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         <app-product-card *ngFor="let relatedProduct of otherProducts" [product]="relatedProduct"></app-product-card>
       </div>
@@ -159,7 +214,6 @@
   </div>
 </div>
 
-<!-- Loading state -->
 <div *ngIf="!product" class="min-h-screen flex items-center justify-center bg-gray-50">
   <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
 </div>

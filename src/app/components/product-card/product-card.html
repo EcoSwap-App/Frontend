@@ -11,7 +11,7 @@
   </div>
 
   <!-- Favorite Button -->
-  <button (click)="toggleFavorite($event)" 
+  <button (click)="toggleFavorite($event)"
           class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center z-20 shadow-sm hover:scale-110 transition-transform duration-200">
     <span class="material-icons text-[18px] transition-colors duration-200"
           [ngClass]="isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-400'">
@@ -22,9 +22,9 @@
   <!-- Image -->
   <div class="h-52 w-full bg-gray-50 relative overflow-hidden flex-shrink-0">
     <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors z-10"></div>
-    
+
     <ng-container *ngIf="product.images && product.images.length > 0">
-      <img [src]="product.images[0].startsWith('data:image') ? product.images[0] : 'assets/' + product.images[0]" alt="{{ product.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+      <img [src]="product.images[0].startsWith('data:image') || product.images[0].startsWith('http') ? product.images[0] : 'assets/' + product.images[0]" alt="{{ product.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
     </ng-container>
 
     <!-- Wanted Placeholder if no image -->
@@ -43,7 +43,7 @@
   <div class="p-5 flex flex-col flex-1">
     <h3 class="font-bold text-gray-900 text-lg leading-tight line-clamp-1 group-hover:text-blue-600 transition-colors">{{ product.title }}</h3>
     <p class="text-sm text-gray-500 mt-2 line-clamp-2 flex-1">{{ product.description }}</p>
-    
+
     <div class="mt-4 flex items-center justify-between">
       <div class="flex items-center">
         <div class="flex text-yellow-400 text-sm">
@@ -56,7 +56,7 @@
         </div>
         <span class="text-[10px] text-gray-400 ml-1.5 font-medium">(5)</span>
       </div>
-      
+
       <div class="font-extrabold text-blue-600 text-lg">
         S/ {{ product.price }}
       </div>

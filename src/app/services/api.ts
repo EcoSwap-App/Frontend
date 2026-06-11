@@ -37,6 +37,10 @@ export class ApiService {
     return this.http.patch<Product>(`${this.apiUrl}/products/${id}`, product);
   }
 
+  deleteProduct(id: number | string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/products/${id}`);
+  }
+
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.apiUrl}/categories`);
   }
@@ -56,11 +60,11 @@ export class ApiService {
   toggleFavorite(userId: number | string, productId: number | string, currentFavorites: (number | string)[] = []): Observable<User> {
     const strProductId = String(productId);
     const isFavorited = currentFavorites.map(String).includes(strProductId);
-    
-    const newFavorites = isFavorited 
-      ? currentFavorites.filter(id => String(id) !== strProductId) 
+
+    const newFavorites = isFavorited
+      ? currentFavorites.filter(id => String(id) !== strProductId)
       : [...currentFavorites, productId];
-      
+
     return this.updateUser(userId, { favorites: newFavorites });
   }
 
