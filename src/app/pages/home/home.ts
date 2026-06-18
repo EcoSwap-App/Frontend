@@ -105,6 +105,19 @@ export class Home implements OnInit {
 
   // --- Inline Publishing Logic ---
 
+  isFormInvalid(): boolean {
+    if (this.isPublishing) return true;
+    if (!this.postContent || !this.postContent.trim()) return true;
+    if (!this.postCategoryId) return true;
+
+    if (this.postType === 'sale') {
+      if (!this.postImageBase64) return true;
+      if (this.postPrice === null || this.postPrice === undefined || this.postPrice < 0) return true;
+    }
+
+    return false;
+  }
+
   toggleDetails() {
     this.showDetails = !this.showDetails;
   }
