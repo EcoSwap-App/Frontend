@@ -20,9 +20,40 @@ export class AuthService {
   ) {
     // Simple mock persistence
     const saved = localStorage.getItem('currentUser');
-    if (saved) {
-      this.currentUserSubject.next(JSON.parse(saved));
+    if (saved && saved !== 'undefined') {
+      try {
+        this.currentUserSubject.next(JSON.parse(saved));
+      } catch (e) {
+        console.error('Error parsing currentUser from localStorage:', e);
+        localStorage.removeItem('currentUser');
+      }
     }
+
+    // Listen to Supabase auth events
+    this.supabaseService.client.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const user = session.user;
+        const metadata = user.user_metadata || {};
+        
+        const current = this.currentUser;
+        if (!current || String(current.id) !== String(user.id)) {
+          this.http.post<User>(`${this.apiUrl}/users/sync`, {
+            name: metadata['name'] || user.email?.split('@')[0] || 'Estudiante UPC',
+            career: metadata['career'] || 'General',
+            cycle: metadata['cycle'] || 1
+          }).subscribe({
+            next: (syncedUser) => {
+              localStorage.setItem('currentUser', JSON.stringify(syncedUser));
+              this.currentUserSubject.next(syncedUser);
+            },
+            error: (err) => console.error('Failed to sync user profile on auth state change:', err)
+          });
+        }
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('currentUser');
+        this.currentUserSubject.next(null);
+      }
+    });
   }
 
   login(email: string, password?: string): Observable<User> {

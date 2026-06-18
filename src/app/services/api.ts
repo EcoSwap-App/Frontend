@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, from } from 'rxjs';
+import { Observable, map, from, catchError, of } from 'rxjs';
 import { Product, Category, User, Chat, Message, Notification, Review } from '../models';
 import { environment } from '../../environments/environment';
 import { SupabaseService } from './supabase.service';
@@ -28,7 +28,7 @@ export class ApiService {
       available: p.available === true || String(p.available) === 'true',
       type: p.type || 'sale',
       createdAt: p.created_at || new Date().toISOString(),
-      images: p.image_url ? [p.image_url] : [],
+      images: Array.isArray(p.image_url) ? p.image_url : (p.image_url ? [p.image_url] : []),
       model3d: p.model_3d
     };
   }
@@ -50,20 +50,14 @@ export class ApiService {
   }
 
   getProductsByUserId(userId: number | string): Observable<Product[]> {
-    return from(this.supabaseService.client.from('products').select('*').eq('user_id', userId)).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return (response.data || []).map(p => this.mapProduct(p));
-      })
+    return this.http.get<any[]>(`${this.apiUrl}/products?userId=${userId}`).pipe(
+      map(products => (products || []).map(p => this.mapProduct(p)))
     );
   }
 
   getProductsExceptUserId(userId: number | string): Observable<Product[]> {
-    return from(this.supabaseService.client.from('products').select('*').eq('available', true).neq('user_id', userId)).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return (response.data || []).map(p => this.mapProduct(p));
-      })
+    return this.http.get<any[]>(`${this.apiUrl}/products?excludeUserId=${userId}`).pipe(
+      map(products => (products || []).map(p => this.mapProduct(p)))
     );
   }
 
@@ -78,9 +72,11 @@ export class ApiService {
       title: product.title,
       price: product.price,
       category: product.categoryId,
-      imageBase64: product.images?.[0] || '',
+      imagesBase64: product.images || [],
       status: product.status || 'used',
-      model3d: product.model3d
+      model3d: product.model3d,
+      type: product.type || 'sale',
+      description: product.description || ''
     };
     return this.http.post<any>(`${this.apiUrl}/products`, backendProduct).pipe(
       map(res => {
@@ -96,7 +92,8 @@ export class ApiService {
       price: product.price,
       status: product.status,
       available: product.available,
-      model3d: product.model3d
+      model3d: product.model3d,
+      description: product.description
     };
     return this.http.put<any>(`${this.apiUrl}/products/${id}`, backendProduct).pipe(
       map(res => {
@@ -111,12 +108,7 @@ export class ApiService {
   }
 
   getCategories(): Observable<Category[]> {
-    return from(this.supabaseService.client.from('categories').select('*')).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data || [];
-      })
-    );
+    return this.http.get<Category[]>(`${this.apiUrl}/categories`);
   }
 
   getLocations(): Observable<any[]> {
@@ -138,27 +130,23 @@ export class ApiService {
   }
 
   getUserById(id: number | string): Observable<User> {
-    // If id is numeric, search by reputation or convert to string UUID
-    return from(this.supabaseService.client.from('users').select('*').eq('id', id).single()).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data;
-      })
+    return this.http.get<User>(`${this.apiUrl}/users/${id}`).pipe(
+      catchError(() => of({
+        id,
+        name: 'Estudiante EcoSwap',
+        email: '',
+        career: 'General',
+        cycle: 1,
+        reputation: 5,
+        verified: false,
+        active: true,
+        createdAt: new Date().toISOString()
+      } as User))
     );
   }
 
   updateUser(id: number | string, user: Partial<User>): Observable<User> {
-    return from(this.supabaseService.client.from('users').update({
-      name: user.name,
-      career: user.career,
-      cycle: user.cycle,
-      avatar: user.avatar
-    }).eq('id', id).select()).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data[0];
-      })
-    );
+    return this.http.put<User>(`${this.apiUrl}/users/profile`, user);
   }
 
   toggleFavorite(userId: number | string, productId: number | string, currentFavorites: (number | string)[] = []): Observable<User> {
