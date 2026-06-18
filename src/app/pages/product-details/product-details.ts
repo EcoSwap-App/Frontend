@@ -31,18 +31,18 @@ export class ProductDetails implements OnInit {
   ngOnInit() {
     this.currentUser = this.authService.currentUser;
     this.route.paramMap.subscribe(params => {
-      const id = Number(params.get('id'));
+      const id = params.get('id');
       if (id) {
         this.loadProductDetails(id);
       }
     });
   }
 
-  loadProductDetails(id: number) {
+  loadProductDetails(id: string) {
     this.apiService.getProductById(id).subscribe(data => {
       this.product = data;
       if (data.images && data.images.length > 0) {
-        this.selectedImage = data.images[0].startsWith('data:image') ? data.images[0] : 'assets/' + data.images[0];
+        this.selectedImage = data.images[0].startsWith('data:image') || data.images[0].startsWith('http') ? data.images[0] : 'assets/' + data.images[0];
       } else {
         this.selectedImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800';
       }
@@ -54,7 +54,7 @@ export class ProductDetails implements OnInit {
       }
       
       // Load Seller Details
-      this.apiService.getUserById(Number(data.userId)).subscribe(sellerData => {
+      this.apiService.getUserById(String(data.userId)).subscribe(sellerData => {
         this.seller = sellerData;
         this.cdr.detectChanges();
       });
@@ -62,12 +62,17 @@ export class ProductDetails implements OnInit {
       // Load other products
       this.apiService.getProducts().subscribe(allProducts => {
         this.otherProducts = allProducts
-          .filter(p => Number(p.id) !== Number(id) && (p.available === true || String(p.available) === 'true'))
+          .filter(p => String(p.id) !== String(id) && (p.available === true || String(p.available) === 'true'))
           .slice(0, 4); // Take up to 4 other products
         this.cdr.detectChanges();
       });
       this.cdr.detectChanges();
     });
+  }
+
+  formatImage(img: string): string {
+    if (!img) return '';
+    return img.startsWith('data:image') || img.startsWith('http') ? img : 'assets/' + img;
   }
 
   getStars(reputation: number): number[] {

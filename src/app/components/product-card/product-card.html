@@ -24,7 +24,7 @@
     <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors z-10"></div>
     
     <ng-container *ngIf="product.images && product.images.length > 0">
-      <img [src]="product.images[0].startsWith('data:image') ? product.images[0] : 'assets/' + product.images[0]" alt="{{ product.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+      <img [src]="product.images[0].startsWith('data:image') || product.images[0].startsWith('http') ? product.images[0] : 'assets/' + product.images[0]" alt="{{ product.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
     </ng-container>
 
     <!-- Wanted Placeholder if no image -->

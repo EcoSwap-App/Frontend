@@ -21,7 +21,7 @@ export class ProductCard implements OnInit {
   ngOnInit() {
     const user = this.authService.currentUser;
     if (user && this.product) {
-      this.isMyProduct = Number(this.product.userId) === Number(user.id);
+      this.isMyProduct = String(this.product.userId) === String(user.id);
       this.isFavorite = (user.favorites || []).map(String).includes(String(this.product.id));
     }
   }

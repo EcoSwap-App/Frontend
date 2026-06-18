@@ -19,16 +19,12 @@
           </div>
           
           <!-- Thumbnails -->
-          <div *ngIf="product.images && product.images.length > 0" class="flex gap-4 w-full overflow-x-auto pb-2">
-            <!-- Mock multiple images based on the first image for demonstration -->
-            <button (click)="selectedImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800'" class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 focus:outline-none" [class.border-blue-500]="selectedImage === 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800'" [class.border-transparent]="selectedImage !== 'https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800'">
-              <img src="https://images.unsplash.com/photo-1544716278-e513176f20b5?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover">
-            </button>
-            <button (click)="selectedImage = 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=400'" class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 focus:outline-none" [class.border-blue-500]="selectedImage === 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=400'" [class.border-transparent]="selectedImage !== 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=400'">
-              <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover">
-            </button>
-            <button (click)="selectedImage = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800'" class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 focus:outline-none" [class.border-blue-500]="selectedImage === 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800'" [class.border-transparent]="selectedImage !== 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800'">
-              <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover">
+          <div *ngIf="product.images && product.images.length > 1" class="flex gap-4 w-full overflow-x-auto pb-2">
+            <button *ngFor="let img of product.images" (click)="selectedImage = formatImage(img)" 
+                    class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 focus:outline-none" 
+                    [class.border-blue-500]="selectedImage === formatImage(img)" 
+                    [class.border-transparent]="selectedImage !== formatImage(img)">
+              <img [src]="formatImage(img)" class="w-full h-full object-cover">
             </button>
           </div>
         </div>
