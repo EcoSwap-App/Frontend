@@ -25,7 +25,7 @@ export class ChatService implements OnDestroy {
   constructor(
     private apiService: ApiService,
     private supabaseService: SupabaseService
-  ) {}
+  ) { }
 
   initForUser(userId: number | string) {
     this.userId = userId;
@@ -86,14 +86,28 @@ export class ChatService implements OnDestroy {
 
           if (eventType === 'INSERT') {
             const newMsg = payload.new;
+            let text = newMsg['content'];
+            let type: 'text' | 'meetup' | 'system' = 'text';
+            let meetup = undefined;
+            try {
+              if (text && text.startsWith('{')) {
+                const parsed = JSON.parse(text);
+                if (parsed.type) {
+                  type = parsed.type;
+                  text = parsed.text || '';
+                  meetup = parsed.meetup;
+                }
+              }
+            } catch (e) { }
+
             const mappedMessage: Message = {
               id: newMsg['id'],
               chatId: newMsg['chat_id'],
               senderId: newMsg['sender_id'],
-              text: newMsg['content'],
+              text: text,
               createdAt: newMsg['created_at'],
-              type: newMsg['type'] || 'text',
-              meetup: newMsg['meetup']
+              type: type,
+              meetup: meetup
             };
 
             if (!currentMessages.some(m => m.id === mappedMessage.id)) {
@@ -101,14 +115,28 @@ export class ChatService implements OnDestroy {
             }
           } else if (eventType === 'UPDATE') {
             const updatedMsg = payload.new;
+            let text = updatedMsg['content'];
+            let type: 'text' | 'meetup' | 'system' = 'text';
+            let meetup = undefined;
+            try {
+              if (text && text.startsWith('{')) {
+                const parsed = JSON.parse(text);
+                if (parsed.type) {
+                  type = parsed.type;
+                  text = parsed.text || '';
+                  meetup = parsed.meetup;
+                }
+              }
+            } catch (e) { }
+
             const index = currentMessages.findIndex(m => m.id === updatedMsg['id']);
             if (index !== -1) {
               const updatedList = [...currentMessages];
               updatedList[index] = {
                 ...updatedList[index],
-                text: updatedMsg['content'],
-                type: updatedMsg['type'] || 'text',
-                meetup: updatedMsg['meetup']
+                text: text,
+                type: type,
+                meetup: meetup
               };
               this.messagesSubject.next(updatedList);
             }
@@ -143,12 +171,12 @@ export class ChatService implements OnDestroy {
     }
   }
 
-  sendMessage(chatId: number | string, senderId: number | string, text: string, type: 'text' | 'meetup' = 'text', meetup?: any) {
+  sendMessage(chatId: number | string, senderId: number | string, text: string, type: 'text' | 'meetup' | 'system' = 'text', meetup?: any) {
     const newMessage: any = { chatId, senderId, text, type, createdAt: new Date().toISOString() };
     if (meetup) {
       newMessage.meetup = meetup;
     }
-    
+
     return this.apiService.sendMessage(newMessage).pipe(
       map(savedMessage => {
         const currentMessages = this.messagesSubject.value;

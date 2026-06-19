@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, from } from 'rxjs';
 import { User } from '../models';
 import { HttpClient } from '@angular/common/http';
-import { tap, switchMap } from 'rxjs/operators';
+import { tap, switchMap, map } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { environment } from '../../environments/environment';
 
@@ -22,7 +22,16 @@ export class AuthService {
     const saved = localStorage.getItem('currentUser');
     if (saved && saved !== 'undefined') {
       try {
-        this.currentUserSubject.next(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        this.currentUserSubject.next(parsed);
+        // Recargar favoritos en segundo plano
+        this.http.get<any[]>(`${this.apiUrl}/favorites`).subscribe({
+          next: (favs) => {
+            parsed.favorites = (favs || []).map(f => String(f.id));
+            localStorage.setItem('currentUser', JSON.stringify(parsed));
+            this.currentUserSubject.next(parsed);
+          }
+        });
       } catch (e) {
         console.error('Error parsing currentUser from localStorage:', e);
         localStorage.removeItem('currentUser');
@@ -43,8 +52,19 @@ export class AuthService {
             cycle: metadata['cycle'] || 1
           }).subscribe({
             next: (syncedUser) => {
-              localStorage.setItem('currentUser', JSON.stringify(syncedUser));
-              this.currentUserSubject.next(syncedUser);
+              // Recargar favoritos del usuario al sincronizar perfil
+              this.http.get<any[]>(`${this.apiUrl}/favorites`).subscribe({
+                next: (favs) => {
+                  syncedUser.favorites = (favs || []).map(f => String(f.id));
+                  localStorage.setItem('currentUser', JSON.stringify(syncedUser));
+                  this.currentUserSubject.next(syncedUser);
+                },
+                error: () => {
+                  syncedUser.favorites = [];
+                  localStorage.setItem('currentUser', JSON.stringify(syncedUser));
+                  this.currentUserSubject.next(syncedUser);
+                }
+              });
             },
             error: (err) => console.error('Failed to sync user profile on auth state change:', err)
           });
@@ -58,7 +78,7 @@ export class AuthService {
 
   login(email: string, password?: string): Observable<User> {
     return from(this.supabaseService.signIn(email, password || '')).pipe(
-      switchMap(response => {
+      switchMap((response: any): Observable<User> => {
         if (response.error) {
           throw response.error;
         }
@@ -74,7 +94,16 @@ export class AuthService {
           cycle: metadata['cycle'] || 1
         });
       }),
-      tap(user => {
+      switchMap((syncedUser: User): Observable<User> => {
+        // Cargar los favoritos desde la base de datos
+        return this.http.get<any[]>(`${this.apiUrl}/favorites`).pipe(
+          map((favs: any[]): User => {
+            syncedUser.favorites = (favs || []).map(f => String(f.id));
+            return syncedUser;
+          })
+        );
+      }),
+      tap((user: User) => {
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
       })

@@ -164,11 +164,28 @@ export class ApiService {
     const strProductId = String(productId);
     const isFavorited = currentFavorites.map(String).includes(strProductId);
     
-    const newFavorites = isFavorited 
-      ? currentFavorites.filter(id => String(id) !== strProductId) 
-      : [...currentFavorites, productId];
-      
-    return this.updateUser(userId, { favorites: newFavorites });
+    const request = isFavorited
+      ? this.http.delete<any>(`${this.apiUrl}/favorites/${productId}`)
+      : this.http.post<any>(`${this.apiUrl}/favorites`, { productId });
+
+    return request.pipe(
+      map(() => {
+        const newFavorites = isFavorited 
+          ? currentFavorites.filter(id => String(id) !== strProductId) 
+          : [...currentFavorites, productId];
+        
+        const savedUser = localStorage.getItem('currentUser');
+        const user = savedUser ? JSON.parse(savedUser) : { id: userId };
+        user.favorites = newFavorites;
+        return user as User;
+      })
+    );
+  }
+
+  getMyFavorites(): Observable<Product[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/favorites`).pipe(
+      map(products => (products || []).map(p => this.mapProduct(p)))
+    );
   }
 
   getChats(userId: number | string): Observable<Chat[]> {
@@ -205,36 +222,135 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/meetings/my-meetings`);
   }
 
-  getMessages(chatId: number | string): Observable<Message[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/chats/${chatId}/messages`).pipe(
-      map(msgs => (msgs || []).map(m => ({
-        id: m.id,
-        chatId: m.chat_id,
-        senderId: m.sender_id,
-        text: m.content,
-        createdAt: m.created_at || new Date().toISOString()
-      })))
-    );
+  createMeeting(meeting: { chatId: string; locationId: string | null; date: string; time: string; notes?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/meetings`, meeting);
   }
 
-  sendMessage(message: Partial<Message>): Observable<Message> {
-    return this.http.post<any>(`${this.apiUrl}/chats/${message.chatId}/messages`, {
-      content: message.text
-    }).pipe(
-      map(m => ({
-        id: m.id,
-        chatId: m.chat_id,
-        senderId: m.sender_id,
-        text: m.content,
-        createdAt: m.created_at || new Date().toISOString()
+  confirmMeeting(id: number | string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/meetings/${id}/confirm`, {});
+  }
+
+  cancelMeeting(id: number | string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/meetings/${id}/cancel`, {});
+  }
+
+  getMessages(chatId: number | string): Observable<Message[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/chats/${chatId}/messages`).pipe(
+      map(msgs => (msgs || []).map(m => {
+        let text = m.content;
+        let type: 'text' | 'meetup' | 'system' = 'text';
+        let meetup = undefined;
+        try {
+          if (m.content && m.content.startsWith('{')) {
+            const parsed = JSON.parse(m.content);
+            if (parsed.type) {
+              type = parsed.type;
+              text = parsed.text || '';
+              meetup = parsed.meetup;
+            }
+          }
+        } catch (e) {}
+        return {
+          id: m.id,
+          chatId: m.chat_id,
+          senderId: m.sender_id,
+          text: text,
+          type: type,
+          meetup: meetup,
+          createdAt: m.created_at || new Date().toISOString()
+        };
       }))
     );
   }
 
-  updateMessage(id: number | string, message: Partial<Message>): Observable<Message> {
-    // No direct update message endpoint on backend, return mock update or direct message update if needed
-    return from(Promise.resolve(message as Message));
+  sendMessage(message: Partial<Message>): Observable<Message> {
+    let content = message.text || '';
+    if (message.type === 'meetup') {
+      content = JSON.stringify({
+        type: 'meetup',
+        text: message.text,
+        meetup: message.meetup
+      });
+    } else if (message.type === 'system') {
+      content = JSON.stringify({
+        type: 'system',
+        text: message.text
+      });
+    }
+    return this.http.post<any>(`${this.apiUrl}/chats/${message.chatId}/messages`, {
+      content: content
+    }).pipe(
+      map(m => {
+        let text = m.content;
+        let type: 'text' | 'meetup' | 'system' = 'text';
+        let meetup = undefined;
+        try {
+          if (m.content && m.content.startsWith('{')) {
+            const parsed = JSON.parse(m.content);
+            if (parsed.type) {
+              type = parsed.type;
+              text = parsed.text || '';
+              meetup = parsed.meetup;
+            }
+          }
+        } catch (e) {}
+        return {
+          id: m.id,
+          chatId: m.chat_id,
+          senderId: m.sender_id,
+          text: text,
+          type: type,
+          meetup: meetup,
+          createdAt: m.created_at || new Date().toISOString()
+        };
+      })
+    );
   }
+
+  updateMessage(id: number | string, message: Partial<Message>): Observable<Message> {
+    let content = message.text || '';
+    if (message.type === 'meetup' || message.meetup) {
+      content = JSON.stringify({
+        type: 'meetup',
+        text: message.text,
+        meetup: message.meetup
+      });
+    } else if (message.type === 'system') {
+      content = JSON.stringify({
+        type: 'system',
+        text: message.text
+      });
+    }
+    return this.http.patch<any>(`${this.apiUrl}/chats/messages/${id}`, {
+      content: content
+    }).pipe(
+      map(m => {
+        let text = m.content;
+        let type: 'text' | 'meetup' | 'system' = 'text';
+        let meetup = undefined;
+        try {
+          if (m.content && m.content.startsWith('{')) {
+            const parsed = JSON.parse(m.content);
+            if (parsed.type) {
+              type = parsed.type;
+              text = parsed.text || '';
+              meetup = parsed.meetup;
+            }
+          }
+        } catch (e) {}
+        return {
+          id: m.id,
+          chatId: m.chat_id,
+          senderId: m.sender_id,
+          text: text,
+          type: type,
+          meetup: meetup,
+          createdAt: m.created_at || new Date().toISOString()
+        };
+      })
+    );
+  }
+
 
   getNotifications(userId: number | string): Observable<Notification[]> {
     return from(this.supabaseService.client.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false })).pipe(
@@ -312,18 +428,15 @@ export class ApiService {
   }
 
   getReviews(userId: number | string): Observable<Review[]> {
-    return from(this.supabaseService.client.from('reputations').select('*').eq('user_id', userId)).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return (response.data || []).map(r => ({
-          id: r.id,
-          reviewerId: r.reviewer_id,
-          targetUserId: r.user_id,
-          rating: r.points,
-          comment: r.reason || '',
-          createdAt: r.created_at
-        }));
-      })
+    return this.http.get<any[]>(`${this.apiUrl}/reputation/${userId}`).pipe(
+      map(reviews => (reviews || []).map(r => ({
+        id: r.id,
+        reviewerId: r.reviewer_id,
+        targetUserId: r.user_id,
+        rating: r.points,
+        comment: r.reason || '',
+        createdAt: r.created_at
+      })))
     );
   }
 
@@ -338,7 +451,7 @@ export class ApiService {
   }
 
   deleteReview(id: number | string): Observable<any> {
-    return from(this.supabaseService.client.from('reputations').delete().eq('id', id));
+    return this.http.delete(`${this.apiUrl}/reputation/${id}`);
   }
 
   createReport(report: { reportedUserId?: number | string; productId?: number | string; reason: string }): Observable<any> {

@@ -60,7 +60,7 @@ export interface Message {
   chatId: number | string;
   senderId: number | string;
   text: string;
-  type?: 'text' | 'meetup';
+  type?: 'text' | 'meetup' | 'system';
   meetup?: {
     location: string;
     date: string;

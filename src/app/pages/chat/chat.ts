@@ -65,6 +65,21 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.chatService.messages$.subscribe(messages => {
       this.messages = messages;
+      
+      // Sincronización en tiempo real del estado vendido del producto:
+      // Al recibir cualquier actualización de mensajes (incluyendo el mensaje del sistema de venta),
+      // refrescamos la información del producto para inhabilitar el chat inmediatamente.
+      if (this.activeChat) {
+        this.apiService.getProductById(this.activeChat.productId).subscribe(product => {
+          const details = this.chatDetails.get(String(this.activeChat!.id));
+          if (details) {
+            details.product = product;
+            this.chatDetails.set(String(this.activeChat!.id), details);
+            this.cdr.detectChanges();
+          }
+        });
+      }
+
       this.cdr.detectChanges();
       this.scrollToBottom();
     });
@@ -174,7 +189,41 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (!msg.id || !msg.meetup || !this.activeChat || !this.currentUser) return;
     
     const updatedMeetup = { ...msg.meetup, status };
-    this.chatService.updateMessage(msg.id, { meetup: updatedMeetup }).subscribe();
+    const patchPayload: Partial<Message> = {
+      type: 'meetup',
+      text: msg.text,
+      meetup: updatedMeetup
+    };
+
+    this.chatService.updateMessage(msg.id, patchPayload).subscribe(() => {
+      if (status === 'accepted') {
+        const meetingData = {
+          chatId: String(this.activeChat!.id),
+          locationId: null,
+          date: msg.meetup!.date,
+          time: msg.meetup!.time,
+          notes: msg.meetup!.location
+        };
+
+        this.apiService.createMeeting(meetingData).subscribe({
+          next: (createdMeeting) => {
+            console.log('Reunión creada exitosamente:', createdMeeting);
+            // Confirmar inmediatamente para habilitar reputación
+            this.apiService.confirmMeeting(createdMeeting.id).subscribe({
+              next: () => {
+                console.log('Reunión confirmada exitosamente');
+              },
+              error: (err) => {
+                console.error('Error al confirmar reunión:', err);
+              }
+            });
+          },
+          error: (err) => {
+            console.error('Error al crear reunión:', err);
+          }
+        });
+      }
+    });
   }
 
   getOtherUser(chat: Chat): User | null {
@@ -209,6 +258,8 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.chatDetails.set(String(this.activeChat!.id), details);
           this.cdr.detectChanges();
         }
+        // Enviamos un mensaje de sistema para propagar el cierre del chat en tiempo real al otro usuario
+        this.chatService.sendMessage(this.activeChat!.id, this.currentUser!.id, '¡Trato hecho! El producto ha sido marcado como vendido.', 'system').subscribe();
       });
     }
   }
