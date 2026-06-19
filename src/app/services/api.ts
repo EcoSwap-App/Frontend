@@ -353,10 +353,9 @@ export class ApiService {
 
 
   getNotifications(userId: number | string): Observable<Notification[]> {
-    return from(this.supabaseService.client.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false })).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return (response.data || []).map(n => ({
+    return this.http.get<any[]>(`${this.apiUrl}/notifications`).pipe(
+      map(data => {
+        return (data || []).map(n => ({
           id: n.id,
           userId: n.user_id,
           type: n.type,
@@ -372,10 +371,8 @@ export class ApiService {
   }
 
   markNotificationRead(id: number | string, read: boolean = true): Observable<Notification> {
-    return from(this.supabaseService.client.from('notifications').update({ read }).eq('id', id).select()).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        const n = response.data[0];
+    return this.http.patch<any>(`${this.apiUrl}/notifications/${id}/read`, { read }).pipe(
+      map(n => {
         return {
           id: n.id,
           userId: n.user_id,
@@ -392,17 +389,14 @@ export class ApiService {
   }
 
   createNotification(notification: Partial<Notification>): Observable<Notification> {
-    return from(this.supabaseService.client.from('notifications').insert([{
-      user_id: notification.userId,
+    return this.http.post<any>(`${this.apiUrl}/notifications`, {
+      userId: notification.userId,
       type: notification.type,
       title: notification.title || 'Nueva notificación',
       message: notification.text || notification.message || '',
-      link_to: notification.chatId ? String(notification.chatId) : null,
-      read: false
-    }]).select()).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        const n = response.data[0];
+      link_to: notification.chatId ? String(notification.chatId) : null
+    }).pipe(
+      map(n => {
         return {
           id: n.id,
           userId: n.user_id,
@@ -419,12 +413,7 @@ export class ApiService {
   }
 
   deleteNotification(id: number | string): Observable<any> {
-    return from(this.supabaseService.client.from('notifications').delete().eq('id', id)).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data;
-      })
-    );
+    return this.http.delete<any>(`${this.apiUrl}/notifications/${id}`);
   }
 
   getReviews(userId: number | string): Observable<Review[]> {
