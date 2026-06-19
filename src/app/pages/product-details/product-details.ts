@@ -84,7 +84,52 @@ export class ProductDetails implements OnInit {
   }
 
   requestProduct() {
-    alert(`Has solicitado el producto: ${this.product?.title}. El vendedor será notificado.`);
+    if (!this.currentUser || !this.product) return;
+    if (String(this.currentUser.id) === String(this.product.userId)) {
+      alert("No puedes solicitar tu propio producto.");
+      return;
+    }
+
+    // 1. Verificar si ya existe un chat para este producto con este vendedor
+    this.apiService.getChats(this.currentUser.id).subscribe(chats => {
+      const existingChat = chats.find(c => String(c.productId) === String(this.product!.id) && c.participants.map(String).includes(String(this.product!.userId)));
+
+      if (existingChat) {
+        // Enviar notificación al vendedor vinculada al chat existente
+        this.apiService.createNotification({
+          userId: this.product!.userId,
+          type: 'purchase',
+          chatId: existingChat.id,
+          text: `${this.currentUser!.name} quiere comprar tu producto "${this.product!.title}".`,
+          read: false
+        }).subscribe();
+        
+        alert(`Ya has solicitado este producto. Te estamos redirigiendo al chat.`);
+        this.router.navigate(['/chat'], { queryParams: { chatId: existingChat.id } });
+      } else {
+        // 2. Si no existe, crear la reunión/chat
+        const newChat: Partial<Chat> = {
+          productId: this.product!.id,
+          participants: [String(this.currentUser!.id), String(this.product!.userId)],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        this.apiService.createChat(newChat).subscribe(createdChat => {
+          // Crear la notificación vinculada al nuevo chat
+          this.apiService.createNotification({
+            userId: this.product!.userId,
+            type: 'purchase',
+            chatId: createdChat.id,
+            text: `${this.currentUser!.name} quiere comprar tu producto "${this.product!.title}".`,
+            read: false
+          }).subscribe();
+
+          alert(`Has solicitado el producto: ${this.product?.title}. Te estamos redirigiendo al chat con el vendedor.`);
+          this.router.navigate(['/chat'], { queryParams: { chatId: createdChat.id } });
+        });
+      }
+    });
   }
 
   contactSeller() {

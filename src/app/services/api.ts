@@ -34,12 +34,23 @@ export class ApiService {
   }
 
   private mapMeetingToChat(m: any): Chat {
+    const chat = m.chats || {};
     return {
       id: m.id,
-      productId: m.product_id,
-      participants: [m.creator_id, m.interested_id],
+      productId: m.product_id || chat.product_id,
+      participants: [m.creator_id || chat.seller_id, m.interested_id || chat.buyer_id],
       createdAt: m.created_at || m.meeting_date || new Date().toISOString(),
       updatedAt: m.updated_at || m.created_at || new Date().toISOString()
+    };
+  }
+
+  private mapChat(c: any): Chat {
+    return {
+      id: c.id,
+      productId: c.product_id,
+      participants: [c.seller_id, c.buyer_id],
+      createdAt: c.created_at || new Date().toISOString(),
+      updatedAt: c.created_at || new Date().toISOString()
     };
   }
 
@@ -161,24 +172,21 @@ export class ApiService {
   }
 
   getChats(userId: number | string): Observable<Chat[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/meetings/my-meetings`).pipe(
-      map(meetings => (meetings || []).map(m => this.mapMeetingToChat(m)))
+    return this.http.get<any[]>(`${this.apiUrl}/chats/my-chats`).pipe(
+      map(chats => (chats || []).map(c => this.mapChat(c)))
     );
   }
 
   createChat(chat: Partial<Chat>): Observable<Chat> {
-    // A chat in our backend is a Meeting
-    const sellerId = chat.participants?.find(p => String(p) !== String(this.supabaseService.client.auth.getUser()));
-    const backendMeeting = {
+    const savedUser = localStorage.getItem('currentUser');
+    const currentUserId = savedUser ? JSON.parse(savedUser).id : null;
+    const sellerId = chat.participants?.find(p => String(p) !== String(currentUserId));
+    const backendChat = {
       productId: chat.productId,
-      interestedId: sellerId || chat.participants?.[1] || '',
-      locationId: 1, // Default location
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().split(' ')[0].slice(0, 5),
-      notes: 'Inicio de chat'
+      sellerId: sellerId || chat.participants?.[1] || ''
     };
-    return this.http.post<any>(`${this.apiUrl}/meetings`, backendMeeting).pipe(
-      map(res => this.mapMeetingToChat(res))
+    return this.http.post<any>(`${this.apiUrl}/chats`, backendChat).pipe(
+      map(res => this.mapChat(res))
     );
   }
 
@@ -190,14 +198,14 @@ export class ApiService {
   }
 
   deleteChat(id: number | string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/meetings/${id}/cancel`, {});
+    return this.http.delete(`${this.apiUrl}/chats/${id}`);
   }
 
   getMessages(chatId: number | string): Observable<Message[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/meetings/${chatId}/messages`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/chats/${chatId}/messages`).pipe(
       map(msgs => (msgs || []).map(m => ({
         id: m.id,
-        chatId: m.meeting_id,
+        chatId: m.chat_id,
         senderId: m.sender_id,
         text: m.content,
         createdAt: m.created_at || new Date().toISOString()
@@ -206,12 +214,12 @@ export class ApiService {
   }
 
   sendMessage(message: Partial<Message>): Observable<Message> {
-    return this.http.post<any>(`${this.apiUrl}/meetings/${message.chatId}/messages`, {
+    return this.http.post<any>(`${this.apiUrl}/chats/${message.chatId}/messages`, {
       content: message.text
     }).pipe(
       map(m => ({
         id: m.id,
-        chatId: m.meeting_id,
+        chatId: m.chat_id,
         senderId: m.sender_id,
         text: m.content,
         createdAt: m.created_at || new Date().toISOString()
@@ -233,9 +241,9 @@ export class ApiService {
           userId: n.user_id,
           type: n.type,
           title: n.title,
-          text: n.text || n.message,
-          message: n.message || n.text,
-          chatId: n.chat_id,
+          text: n.message || '',
+          message: n.message || '',
+          chatId: n.link_to,
           read: n.read,
           createdAt: n.created_at
         }));
@@ -253,9 +261,9 @@ export class ApiService {
           userId: n.user_id,
           type: n.type,
           title: n.title,
-          text: n.text || n.message,
-          message: n.message || n.text,
-          chatId: n.chat_id,
+          text: n.message || '',
+          message: n.message || '',
+          chatId: n.link_to,
           read: n.read,
           createdAt: n.created_at
         };
@@ -267,10 +275,9 @@ export class ApiService {
     return from(this.supabaseService.client.from('notifications').insert([{
       user_id: notification.userId,
       type: notification.type,
-      title: notification.title,
-      text: notification.text || notification.message,
-      message: notification.message || notification.text,
-      chat_id: notification.chatId,
+      title: notification.title || 'Nueva notificación',
+      message: notification.text || notification.message || '',
+      link_to: notification.chatId ? String(notification.chatId) : null,
       read: false
     }]).select()).pipe(
       map(response => {
@@ -281,9 +288,9 @@ export class ApiService {
           userId: n.user_id,
           type: n.type,
           title: n.title,
-          text: n.text || n.message,
-          message: n.message || n.text,
-          chatId: n.chat_id,
+          text: n.message || '',
+          message: n.message || '',
+          chatId: n.link_to,
           read: n.read,
           createdAt: n.created_at
         };

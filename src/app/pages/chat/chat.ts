@@ -215,7 +215,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   deleteActiveChat() {
     if (!this.activeChat) return;
-    if (confirm('¿Seguro que quieres eliminar este chat de tu bandeja?')) {
+    if (confirm('⚠️ ¿Seguro que quieres eliminar este chat?\n\nEsta acción eliminará de forma permanente todo el historial de mensajes y los acuerdos de reunión asociados para ambos participantes.\n\nEsta acción no se puede deshacer.')) {
       this.apiService.deleteChat(this.activeChat.id).subscribe(() => {
         this.activeChat = null;
         this.chatService.refreshChats();
