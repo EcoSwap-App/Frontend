@@ -201,6 +201,10 @@ export class ApiService {
     return this.http.delete(`${this.apiUrl}/chats/${id}`);
   }
 
+  getMyMeetings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/meetings/my-meetings`);
+  }
+
   getMessages(chatId: number | string): Observable<Message[]> {
     return this.http.get<any[]>(`${this.apiUrl}/chats/${chatId}/messages`).pipe(
       map(msgs => (msgs || []).map(m => ({
@@ -323,11 +327,11 @@ export class ApiService {
     );
   }
 
-  addReview(review: Partial<Review>): Observable<any> {
+  addReview(review: Partial<Review> & { meetingId?: number | string }): Observable<any> {
     const backendReview = {
       targetUserId: review.targetUserId,
       points: review.rating || 5,
-      meetingId: 1, // Default or select first meeting
+      meetingId: review.meetingId || null,
       reason: review.comment || ''
     };
     return this.http.post<any>(`${this.apiUrl}/reputation`, backendReview);
