@@ -23,7 +23,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   
   // Meetup modal state
   showMeetupModal = false;
-  meetupLocation = '';
+  meetupLocationId = '';
+  meetupNotes = '';
+  locations: any[] = [];
   meetupDate = '';
   meetupTime = '';
   
@@ -43,6 +45,13 @@ export class ChatComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.currentUser = this.authService.currentUser;
     if (!this.currentUser) return;
+
+    this.apiService.getLocations().subscribe(locations => {
+      this.locations = locations || [];
+      if (this.locations.length > 0) {
+        this.meetupLocationId = String(this.locations[0].id);
+      }
+    });
 
     this.chatService.initForUser(this.currentUser.id);
 
@@ -160,7 +169,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     tomorrow.setDate(tomorrow.getDate() + 1);
     this.meetupDate = tomorrow.toISOString().split('T')[0];
     this.meetupTime = '12:00';
-    this.meetupLocation = 'Campus UPC';
+    this.meetupNotes = '';
+    if (this.locations.length > 0) {
+      this.meetupLocationId = String(this.locations[0].id);
+    }
   }
 
   closeMeetupModal() {
@@ -168,16 +180,24 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   sendMeetupProposal() {
-    if (!this.activeChat || !this.currentUser || !this.meetupLocation || !this.meetupDate || !this.meetupTime) return;
+    if (!this.activeChat || !this.currentUser || !this.meetupLocationId || !this.meetupDate || !this.meetupTime) return;
     
+    const selectedLoc = this.locations.find(l => String(l.id) === String(this.meetupLocationId));
+    const locationName = selectedLoc ? selectedLoc.name : 'Ubicación seleccionada';
+
     const meetupData = {
-      location: this.meetupLocation,
+      locationId: this.meetupLocationId,
+      location: locationName,
       date: this.meetupDate,
       time: this.meetupTime,
+      notes: this.meetupNotes || '',
       status: 'pending'
     };
     
-    const text = `Propuesta de encuentro: ${this.meetupLocation} el ${this.meetupDate} a las ${this.meetupTime}`;
+    let text = `Propuesta de encuentro: ${locationName} el ${this.meetupDate} a las ${this.meetupTime}`;
+    if (this.meetupNotes) {
+      text += `\nNota: ${this.meetupNotes}`;
+    }
     
     this.chatService.sendMessage(this.activeChat.id, this.currentUser.id, text, 'meetup', meetupData)
       .subscribe(() => {
@@ -199,10 +219,10 @@ export class ChatComponent implements OnInit, OnDestroy {
       if (status === 'accepted') {
         const meetingData = {
           chatId: String(this.activeChat!.id),
-          locationId: null,
+          locationId: msg.meetup!.locationId ? String(msg.meetup!.locationId) : null,
           date: msg.meetup!.date,
           time: msg.meetup!.time,
-          notes: msg.meetup!.location
+          notes: msg.meetup!.notes || msg.meetup!.location || ''
         };
 
         this.apiService.createMeeting(meetingData).subscribe({

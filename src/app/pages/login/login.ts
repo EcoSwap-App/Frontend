@@ -27,6 +27,13 @@ export class Login {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+
+    // Auto-redirect if already logged in (e.g. from OAuth redirect callback)
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.router.navigate(['/home']);
+      }
+    });
   }
 
   onSubmit() {

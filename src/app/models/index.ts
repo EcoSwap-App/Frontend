@@ -62,9 +62,12 @@ export interface Message {
   text: string;
   type?: 'text' | 'meetup' | 'system';
   meetup?: {
+    locationId?: string | null;
+    locationName?: string;
     location: string;
     date: string;
     time: string;
+    notes?: string;
     status: 'pending' | 'accepted' | 'declined';
   };
   createdAt: string;
