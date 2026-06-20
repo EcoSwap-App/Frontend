@@ -1,16 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:5001',
+  apiUrl: 'https://ecoswap-server.onrender.com',
   supabaseUrl: 'https://wsgeeshfilnruudmemcl.supabase.co',
   supabaseKey: 'sb_publishable_6dPY7ngU3EzfgdsI-NOf2g_i0TGNP5e',
-  platformProviderApiBaseUrl: 'http://localhost:3000/api/v1',
-  platformProviderUsersEndpointPath: '/users',
-  platformProviderUniversitiesEndpointPath: '/universities',
-  platformProviderCategoriesEndpointPath: '/categories',
-  platformProviderProductsEndpointPath: '/products',
-  platformProviderLocationsEndpointPath: '/locations',
-  platformProviderMessagesEndpointPath: '/messages',
-  platformProviderMeetingsEndpointPath: '/meetings',
-  platformProviderReputationsEndpointPath: '/reputations',
-  platformProviderReportsEndpointPath: '/reports',
 };
