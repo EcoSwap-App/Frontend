@@ -45,6 +45,7 @@ export interface Product {
   createdAt: string;
   images: string[];
   model3d?: Model3D;
+  subject?: string;
 }
 
 export interface Chat {

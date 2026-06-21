@@ -151,13 +151,16 @@ export class AddProduct implements OnInit {
         description: formValue.description,
         price: Number(formValue.price),
         status: formValue.status,
-        categoryId: Number(formValue.categoryId),
+        categoryId: formValue.categoryId,
         userId: user ? user.id : 1,
         available: true,
         type: formValue.type,
         createdAt: new Date().toISOString().split('T')[0],
-        images: this.imagesBase64
+        images: this.imagesBase64,
+        subject: formValue.subcategoryId
       };
+      
+      console.log('Sending product payload:', newProduct);
 
       this.apiService.addProduct(newProduct).subscribe(() => {
         this.success = true;

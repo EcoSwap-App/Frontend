@@ -29,7 +29,8 @@ export class ApiService {
       type: p.type || 'sale',
       createdAt: p.created_at || new Date().toISOString(),
       images: Array.isArray(p.image_url) ? p.image_url : (p.image_url ? [p.image_url] : []),
-      model3d: p.model_3d
+      model3d: p.model_3d,
+      subject: p.subject
     };
   }
 
@@ -87,7 +88,8 @@ export class ApiService {
       status: product.status || 'used',
       model3d: product.model3d,
       type: product.type || 'sale',
-      description: product.description || ''
+      description: product.description,
+      subject: product.subject
     };
     return this.http.post<any>(`${this.apiUrl}/products`, backendProduct).pipe(
       map(res => {
@@ -104,7 +106,11 @@ export class ApiService {
       status: product.status,
       available: product.available,
       model3d: product.model3d,
-      description: product.description
+      description: product.description,
+      subject: product.subject,
+      imagesBase64: product.images,
+      category: product.categoryId,
+      type: product.type
     };
     return this.http.put<any>(`${this.apiUrl}/products/${id}`, backendProduct).pipe(
       map(res => {
@@ -135,7 +141,11 @@ export class ApiService {
     return from(this.supabaseService.client.from('users').select('*')).pipe(
       map(response => {
         if (response.error) throw response.error;
-        return response.data || [];
+        return (response.data || []).map((u: any) => ({
+          ...u,
+          avatar: u.image_url,
+          createdAt: u.created_at
+        }));
       })
     );
   }

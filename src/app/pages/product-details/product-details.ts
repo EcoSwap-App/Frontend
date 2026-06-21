@@ -53,6 +53,14 @@ export class ProductDetails implements OnInit {
         this.isOwner = true;
       }
       
+      // If the product is not available and the current user is not the owner, redirect them
+      const isAvailable = data.available === true || String(data.available) === 'true';
+      if (!isAvailable && !this.isOwner) {
+        alert('Este producto ya no está disponible.');
+        this.router.navigate(['/catalog']);
+        return;
+      }
+      
       // Load Seller Details
       this.apiService.getUserById(String(data.userId)).subscribe(sellerData => {
         this.seller = sellerData;

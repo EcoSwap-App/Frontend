@@ -147,7 +147,7 @@ export class Home implements OnInit {
     // Default values if some fields are left empty
     const finalType = this.postType;
     const finalPrice = finalType === 'wanted' ? 0 : (this.postPrice || 0);
-    const finalCategory = this.postCategoryId || (this.categories.length > 0 ? this.categories[0].id : 1);
+    const finalCategory = this.postCategoryId || (this.categories.length > 0 ? this.categories[0].id : undefined);
     
     // Create a meaningful title from content (first 50 chars)
     let finalTitle = this.postContent.trim().split('\n')[0].substring(0, 50);
@@ -156,7 +156,7 @@ export class Home implements OnInit {
 
     const newPost: Partial<Product> = {
       title: finalTitle,
-      description: this.postContent.trim(),
+      description: null as any,
       price: finalPrice,
       status: this.postStatus,
       categoryId: finalCategory,
@@ -176,12 +176,8 @@ export class Home implements OnInit {
         this.showDetails = false;
         this.isPublishing = false;
         
-        // Add to feed locally
-        this.allProducts.unshift(createdPost);
-        
-        // Switch to the correct feed type to show the new post
-        this.setFeedType(finalType);
-        this.applyFilters();
+        alert('Publicación creada con éxito. Puedes verla en la sección de tus productos.');
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error publishing post', err);
