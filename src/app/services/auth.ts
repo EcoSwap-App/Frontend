@@ -46,12 +46,17 @@ export class AuthService {
         
         const current = this.currentUser;
         if (!current || String(current.id) !== String(user.id)) {
+          const pendingAvatar = localStorage.getItem('pendingAvatar');
           this.http.post<User>(`${this.apiUrl}/users/sync`, {
             name: metadata['name'] || user.email?.split('@')[0] || 'Estudiante UPC',
             career: metadata['career'] || 'General',
-            cycle: metadata['cycle'] || 1
+            cycle: metadata['cycle'] || 1,
+            avatar: pendingAvatar || metadata['avatar'] || ''
           }).subscribe({
             next: (syncedUser) => {
+              if (pendingAvatar) {
+                localStorage.removeItem('pendingAvatar');
+              }
               // Recargar favoritos del usuario al sincronizar perfil
               this.http.get<any[]>(`${this.apiUrl}/favorites`).subscribe({
                 next: (favs) => {
@@ -88,11 +93,19 @@ export class AuthService {
         }
         
         const metadata = user.user_metadata || {};
+        const pendingAvatar = localStorage.getItem('pendingAvatar');
         return this.http.post<User>(`${this.apiUrl}/users/sync`, {
           name: metadata['name'] || user.email?.split('@')[0] || 'Estudiante UPC',
           career: metadata['career'] || 'General',
-          cycle: metadata['cycle'] || 1
-        });
+          cycle: metadata['cycle'] || 1,
+          avatar: pendingAvatar || metadata['avatar'] || ''
+        }).pipe(
+          tap(() => {
+            if (pendingAvatar) {
+              localStorage.removeItem('pendingAvatar');
+            }
+          })
+        );
       }),
       switchMap((syncedUser: User): Observable<User> => {
         // Cargar los favoritos desde la base de datos

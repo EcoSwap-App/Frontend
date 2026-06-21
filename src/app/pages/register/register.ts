@@ -19,6 +19,7 @@ export class Register {
   avatarBase64: string = '';
   isCompressing: boolean = false;
   isMicrosoftLoading: boolean = false;
+  isLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -30,7 +31,6 @@ export class Register {
   ) {
     this.registerForm = this.fb.group({
       name: ['', Validators.required],
-      phone: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
       confirmPassword: ['', Validators.required]
@@ -47,9 +47,9 @@ export class Register {
       console.log('File selected:', event.target.files[0].name);
       this.isCompressing = true;
       this.cdr?.detectChanges();
-      
+
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       try {
         const file = event.target.files[0];
         console.log('Starting compression...');
@@ -105,7 +105,7 @@ export class Register {
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
-            
+
             // Use WebP for better compression, quality 0.7
             const dataUrl = canvas.toDataURL('image/webp', 0.7);
             resolve(dataUrl);
@@ -128,6 +128,15 @@ export class Register {
         return;
       }
 
+      this.isLoading = true;
+      this.error = '';
+
+      if (this.avatarBase64) {
+        localStorage.setItem('pendingAvatar', this.avatarBase64);
+      } else {
+        localStorage.removeItem('pendingAvatar');
+      }
+
       from(this.supabaseService.client.auth.signUp({
         email,
         password,
@@ -140,13 +149,16 @@ export class Register {
         }
       })).subscribe({
         next: (res) => {
+          this.isLoading = false;
           if (res.error) {
             this.error = 'Error al crear la cuenta: ' + res.error.message;
           } else {
+            alert('¡Cuenta creada con éxito!');
             this.router.navigate(['/login']);
           }
         },
         error: (err) => {
+          this.isLoading = false;
           this.error = 'Error de conexión con el servidor de autenticación.';
         }
       });
@@ -156,9 +168,12 @@ export class Register {
   registerWithMicrosoft() {
     this.isMicrosoftLoading = true;
     this.error = '';
-    
+
     from(this.supabaseService.client.auth.signInWithOAuth({
       provider: 'azure',
+      options: {
+        redirectTo: window.location.origin + '/login'
+      }
     })).subscribe({
       next: (res) => {
         if (res.error) {

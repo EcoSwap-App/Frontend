@@ -14,8 +14,9 @@ import { from } from 'rxjs';
 })
 export class Login {
   loginForm: FormGroup;
-  error: string = '';
+  isLoading: boolean = false;
   isMicrosoftLoading: boolean = false;
+  error: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -38,11 +39,14 @@ export class Login {
 
   onSubmit() {
     if (this.loginForm.valid) {
+      this.isLoading = true;
+      this.error = '';
       this.authService.login(
         this.loginForm.value.email,
         this.loginForm.value.password
       ).subscribe({
         next: (user) => {
+          this.isLoading = false;
           if (user) {
             this.router.navigate(['/home']);
           } else {
@@ -50,6 +54,7 @@ export class Login {
           }
         },
         error: (err) => {
+          this.isLoading = false;
           this.error = 'Credenciales inválidas o error de conexión: ' + (err.message || err);
         }
       });
@@ -62,6 +67,9 @@ export class Login {
     
     from(this.supabaseService.client.auth.signInWithOAuth({
       provider: 'azure',
+      options: {
+        redirectTo: window.location.origin + '/login'
+      }
     })).subscribe({
       next: (res) => {
         if (res.error) {
